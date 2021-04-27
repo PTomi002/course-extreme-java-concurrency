@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<!-- saved from url=(0046)https://plumbr.io/handbook/gc-tuning-measuring -->
+<html lang="en"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+		<link rel="shortcut icon" href="https://plumbr.io/app/themes/plumbr/dist/images/favicon_9b72e733.png">
+
+	<title>GC Tuning: Tooling | Plumbr – User Experience &amp; Application Performance Monitoring</title>
+
+<!-- The SEO Framework by Sybre Waaijer -->
+<meta name="description" content="Before you can optimize your JVM for more efficient garbage collection, you need to get information about its current behavior to understand the impact that GC…">
+<meta property="og:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta property="og:image:width" content="980">
+<meta property="og:image:height" content="370">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GC Tuning: Tooling | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="og:description" content="Before you can optimize your JVM for more efficient garbage collection, you need to get information about its current behavior to understand the impact that GC has on your application and its…">
+<meta property="og:url" content="https://plumbr.io/handbook/gc-tuning-measuring">
+<meta property="og:site_name" content="Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="article:publisher" content="https://www.facebook.com/javaplumbr">
+<meta property="article:published_time" content="2015-05-04T22:15+00:00">
+<meta property="article:modified_time" content="2018-12-12T14:00-01:00">
+<meta property="og:updated_time" content="2018-12-12T14:00-01:00">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@JavaPlumbr">
+<meta name="twitter:title" content="GC Tuning: Tooling | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta name="twitter:description" content="Before you can optimize your JVM for more efficient garbage collection, you need to get information about its current behavior to understand the impact that GC has on your application and its…">
+<meta name="twitter:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta name="twitter:image:width" content="980">
+<meta name="twitter:image:height" content="370">
+<link rel="canonical" href="https://plumbr.io/handbook/gc-tuning-measuring">
+<script src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/collectedforms.js.download" type="text/javascript" id="CollectedForms-5894543" crossorigin="anonymous" data-leadin-portal-id="5894543" data-leadin-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js.download" type="text/javascript" id="hs-analytics"></script><script src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(1).download" type="text/javascript" id="cookieBanner-5894543" data-cookieconsent="ignore" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script async="" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/analytics.js.download"></script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://plumbr.io/","name":"Plumbr &#8211; User Experience &amp; Application Performance Monitoring"}},{"@type":"ListItem","position":2,"item":{"@id":"https://plumbr.io/handbook/java-garbage-collection-handbook","name":"Java Garbage Collection handbook"}},{"@type":"ListItem","position":3,"item":{"@id":"https://plumbr.io/handbook/gc-tuning-measuring","name":"GC Tuning: Tooling"}}]}</script>
+<!-- / The SEO Framework by Sybre Waaijer | 6.15ms meta | 0.39ms boot -->
+
+<link rel="dns-prefetch" href="https://js.hs-scripts.com/">
+<link rel="dns-prefetch" href="https://use.typekit.net/">
+<link rel="stylesheet" id="wp-block-library-css" href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/main.css-css" href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/main_113b80ea.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/typekit.css-css" href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/thh1ylu.css" type="text/css" media="all">
+
+<link rel="https://api.w.org/" href="https://plumbr.io/wp-json/">
+<link rel="alternate" type="application/json+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning-measuring">
+<link rel="alternate" type="text/xml+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning-measuring&amp;format=xml">
+			<!-- DO NOT COPY THIS SNIPPET! Start of Page Analytics Tracking for HubSpot WordPress plugin v7.48.24-->
+			<script type="text/javascript">
+				var _hsq = _hsq || [];
+				_hsq.push(["setContentType", "blog-post"]);
+			</script>
+			<!-- DO NOT COPY THIS SNIPPET! End of Page Analytics Tracking for HubSpot WordPress plugin -->
+						<script>
+				(function() {
+					var hbspt = window.hbspt = window.hbspt || {};
+					hbspt.forms = hbspt.forms || {};
+					hbspt._wpFormsQueue = [];
+					hbspt.enqueueForm = function(formDef) {
+						if (hbspt.forms && hbspt.forms.create) {
+							hbspt.forms.create(formDef);
+						} else {
+							hbspt._wpFormsQueue.push(formDef);
+						}
+					}
+					if (!window.hbspt.forms.create) {
+						Object.defineProperty(window.hbspt.forms, 'create', {
+							configurable: true,
+							get: function() {
+								return hbspt._wpCreateForm;
+							},
+							set: function(value) {
+								hbspt._wpCreateForm = value;
+								while (hbspt._wpFormsQueue.length) {
+									var formDef = hbspt._wpFormsQueue.shift();
+									if (!document.currentScript) {
+										var formScriptId = 'leadin-forms-v2-js';
+										hubspot.utils.currentScript = document.getElementById(formScriptId);
+									}
+									hbspt._wpCreateForm.call(hbspt.forms, formDef);
+								}
+							},
+						});
+					}
+				})();
+			</script>
+		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+			<link rel="stylesheet" href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/prettify.css">
+	
+	    <script>
+        (function () {
+            var RDECODE = /(%[0-9A-Z]{2})+/g;
+
+            function plumbrGetCookie(e) {
+                var o = document.cookie ? document.cookie.split("; ") : [];
+                for (var c = 0; c < o.length; c++) {
+                    var n = o[c].indexOf("=");
+                    if (e === o[c].slice(0, n).replace(RDECODE, decodeURIComponent)) {
+                        return o[c].slice(n + 1).replace(RDECODE, decodeURIComponent)
+                    }
+                }
+            }
+            try {
+                var plumbrConsentCookie = plumbrGetCookie('plumbrCookieConsent')
+                if (plumbrConsentCookie) {
+                    window.plumbrConsent = JSON.parse(plumbrConsentCookie);
+                }
+            } catch (e) {
+                console.error('Cookie error')
+            }
+        })()
+    </script>
+	<script src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/pa-early.js.download" crossorigin="anonymous" data-plumbr-lateinit=""></script>
+	<script>
+		var paConf = {
+            "accountId": "k8g0ta8m6e7gsb2afhq6qm5efh",
+            "serverUrl": "https://plumbr.plumbr.io",
+            "appName": "plumbr.io"
+		}
+
+		if (!window.plumbrConsent || !window.plumbrConsent.analytics) {
+            paConf["tracking"] = {
+                "user": false,
+                "session": false
+            };
+        }
+
+        PLUMBR.init(paConf);
+	</script>
+
+    
+    <script>
+		if (!window.plumbrConsentCookie || !window.plumbrConsentCookie.analytics) {
+            window['ga-disable-UA-25569981-1'] = true;
+		}
+
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-25569981-1', 'auto');
+        ga('require', 'displayfeatures');
+        ga('require', 'eventTracker');
+        ga('require', 'outboundLinkTracker');
+        ga('send', 'pageview');
+    </script>
+
+	<script type="application/ld+json">
+	{
+		"@context" : "http://schema.org",
+		"@type"    : "Organization",
+		"name"     : "Plumbr &#8211; User Experience &amp; Application Performance Monitoring",
+		"url" 	   : "https://plumbr.io",
+		"sameAs"   : [
+			"https://www.facebook.com/javaplumbr",
+            "https://twitter.com/JavaPlumbr",
+            "https://www.linkedin.com/company/plumbr"
+		]
+	}
+</script></head>
+
+<body class=" ">
+<div class="top-banner">
+	Splunk Completes Acquisition of Plumbr <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">Learn more <i class="icon icon-right-open"></i></a>
+</div>
+<div id="header" class="clear">
+	<div class="wrap clear">
+		<p id="logo"><a href="https://plumbr.io/" class="icon icon-plumbr"></a></p>
+
+		<div id="user-box">
+			<a href="https://plumbr.io/handbook/gc-tuning-measuring#" data-modal="modal-login" class="js-show-logged-out">Log In</a>
+			<a href="https://plumbr.io/handbook/gc-tuning-measuring#" class="btn cta" id="menu-toggler"><i class="icon icon-menu"></i></a>
+
+			<a id="continueMonitoring" href="https://app.plumbr.io/" class="btn cta btn-icon hidden js-show-logged-in"><i class="icon icon-chart-area hidden"></i> Continue Monitoring</a>
+		</div>
+
+					<ul id="nav" class="menu"><li class="parent"><a href="https://plumbr.io/product">Product</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/product/features">Features</a></li><li><a href="https://plumbr.io/product/apm">APM</a></li><li><a href="https://plumbr.io/product/rum">RUM</a></li><li><a href="https://plumbr.io/integrations">Integrations</a></li></ul></div></li><li class="parent"><a href="https://plumbr.io/solutions">Solutions</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/solutions/devops">Devops</a></li><li><a href="https://plumbr.io/solutions/oncall-engineers">On-call Engineers</a></li></ul></div></li><li><a href="https://plumbr.io/pricing">Pricing</a></li><li class="parent"><a href="https://plumbr.io/handbook/gc-tuning-measuring#">Resources</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/how-plumbr-works">How Plumbr Works</a></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/case-study/port-of-tallinn">Case studies</a></li><li><a href="https://plumbr.io/support">Support</a></li><li><a href="https://plumbr.io/root-causes">Root Causes</a></li></ul></div></li></ul>			</div>
+</div>
+
+
+
+<div id="user-nav">
+    <div class="wrap clear">
+        <ul>
+                <li class="">
+        <a href="https://plumbr.io/outofmemoryerror">
+            <i class="icon icon-book"></i>
+			java.lang.Outofmemoryerror        </a>
+    </li>
+    <li class="active">
+        <a href="https://plumbr.io/java-garbage-collection-handbook">
+            <i class="icon icon-book"></i>
+			Java Garbage Collection handbook        </a>
+    </li>
+	        </ul>
+    </div>
+</div>
+<div id="content">
+    <div class="wrap split">
+
+        <p id="sidebar-toggler">
+            <a href="https://plumbr.io/handbook/gc-tuning-measuring#" data-label="Close categories">
+                <i class="icon icon-menu"></i>
+                <i class="icon icon-cancel"></i>
+                <span class="label">Handbook menu</span>
+            </a>
+        </p>
+
+        <div id="sidebar">
+
+			    <div class="floating-wrap" style="padding-top: 0px;">
+        <div class="floating-content" style="position: static; top: auto; left: 0px; bottom: auto; width: 226px; margin-bottom: 0px;">
+			
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/what-is-garbage-collection">
+							What Is Garbage Collection?                        </a>
+						                            <a href="https://plumbr.io/handbook/what-is-garbage-collection" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#manual-memory-management">
+						Manual Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#on-demand">
+						Smart Pointers                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#automated-memory-management">
+						Automated Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#reference-counting">
+						Reference Counting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#mark-and-sweep">
+						Mark and Sweep                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-in-java">
+							Garbage Collection in Java                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-in-java" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#fragmenting-and-compacting">
+						Fragmenting and Compacting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#generational-hypothesis">
+						Generational Hypothesis                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#memory-pools">
+						Memory Pools                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#eden">
+						Eden                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#survivor-spaces">
+						Survivor Spaces                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#oldtenured-space">
+						Old Generation                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#permgen">
+						PermGen                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#metaspace">
+						Metaspace                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">
+						Minor GC vs Major GC vs Full GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#major-gc-vs-full-gc">
+						Major GC vs Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms">
+							GC Algorithms: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#marking-reachable-objects">
+						Marking Reachable Objects                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#removing-unused-objects">
+						Removing Unused Objects                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#sweep">
+						Sweep                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#compact">
+						Compact                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#copy">
+						Copy                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations">
+							GC Algorithms: Implementations                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-gc">
+						Serial GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-gc">
+						Parallel GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-mark-and-sweep">
+						Concurrent Mark and Sweep                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#g1">
+						G1 – Garbage First                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-fully-young">
+						Evacuation Pause: Fully Young                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-marking">
+						Concurrent Marking                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-mixed">
+						Evacuation Pause: Mixed                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#summary">
+						Summary                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#shenandoah">
+						Shenandoah                    </a>
+							                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning">
+							GC Tuning: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput-vs-latency-vs-capacity">
+						Core Concepts                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#latency">
+						Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput">
+						Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#capacity">
+						Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#example">
+						Example                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-latency">
+						Tuning for Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-throughput">
+						Tuning for Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-capacity">
+						Tuning for Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu active open">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-measuring">
+							GC Tuning: Tooling                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-measuring" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jmx-api">
+						JMX API                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jvisualvm">
+						JVisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jstat">
+						jstat                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gc-logs">
+						GC logs                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gcviewer">
+						GCViewer                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#profilers">
+						Profilers                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#hprof">
+						hprof                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#java-visualvm">
+						Java VisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#aprof">
+						AProf                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-in-practice">
+							GC Tuning: In Practice                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-in-practice" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#high-allocation-rate">
+						High Allocation Rate                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-allocation-rate">
+						How to Measure Allocation Rate?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#premature-promotion">
+						Premature Promotion                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-promotion-rate">
+						How to Measure Promotion Rate                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-promotion">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-promotion">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-promotion">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-promotion">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#weak-soft-and-phantom-references">
+						Weak, Soft and Phantom References                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-references">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-references">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-references">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-references">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#other-examples">
+						Other Examples                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#rmi-gc">
+						RMI &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#jvmti-tagging-gc">
+						JVMTI tagging &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#humongous-allocations">
+						Humongous Allocations                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#conclusion">
+						Conclusion                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+			        </div>
+    </div>
+	
+        </div>
+        <div id="main">
+            <div class="article handbook">
+									
+<h1 class="highlight">GC Tuning: Tooling</h1>
+<p>Before you can optimize your JVM for more efficient garbage collection, you need to get information about its current behavior to understand the impact that GC has on your application and its perception by end users. There are multiple ways to observe the work of GC and in this chapter we will cover several different possibilities.</p>
+<p>While observing GC behavior there is raw data provided by the JVM runtime. In addition, there are derived metrics that can be calculated based on that raw data. The raw data, for instance, contains:</p>
+<ul>
+<li>current occupancy of memory pools,</li>
+<li>capacity of memory pools,</li>
+<li>durations of individual GC pauses,</li>
+<li>duration of the different phases of those pauses.</li>
+</ul>
+<p>The derived metrics include, for example, the allocation and promotion rates of the application. In this chapter will talk mainly about ways of acquiring the raw data. The most important derived metrics are described in the following chapter discussing the most common GC-related performance problems.</p>
+
+					<h2 id="jmx-api">JMX API</h2><p>The most basic way to get GC-related information from the running JVM is via the standard <a href="https://docs.oracle.com/javase/tutorial/jmx/index.html">JMX API</a>. This is a standardized way for the JVM to expose internal information regarding the runtime state of the JVM. You can access this API either programmatically from your own application running inside the very same JVM, or using JMX clients.</p>
+<p>Two of the most popular JMX clients are <a href="http://docs.oracle.com/javase/7/docs/technotes/guides/management/jconsole.html">JConsole</a> and <a href="http://docs.oracle.com/javase/7/docs/technotes/tools/share/jvisualvm.html">JVisualVM</a> (with a corresponding plugin installed). Both of these tools are part of the standard JDK distribution, so getting started is easy. If you are running on JDK 7u40 or later, a third tool bundled into the JDK called <a href="http://www.oracle.com/technetwork/java/javaseproducts/mission-control/java-mission-control-1998576.html">Java Mission Control</a> is also available.</p>
+<p>All the JMX clients run as a separate application connecting to the target JVM. The target JVM can be either local to the client if running both in the same machine, or remote. For the remote connections from client, JVM has to explicitly allow remote JMX connections. This can be achieved by setting a specific system property to the port where you wish to enable the JMX RMI connection to arrive:</p>
+<pre>java -Dcom.sun.management.jmxremote.port=5432 com.yourcompanyYourApp</pre>
+<p>In the example above, the JVM opens port 5432 for JMX connections.</p>
+<p>After connecting your JMX client to the JVM of interest and navigating to the MBeans list, select MBeans under the node “<em>java.lang/GarbageCollector</em>”. See below for two screenshots exposing information about GC behavior from JVisualVM and Java Mission Control, respectively:</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/JMX-view.png"><img class="aligncenter" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/JMX-view.png" alt="JMX GC tuning"></a></p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/JMX-view-Mbean.png"><img class="aligncenter" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/JMX-view-Mbean.png" alt="JMX MBean view attributes"></a></p>
+<p>As the screenshots above indicate, there are two garbage collectors present. One of these collectors is responsible for cleaning the young generation and one for the old generation. The names of those elements correspond to the names of the garbage collectors used. In the screenshots above we can see that the particular JVM is running with ParallelNew for the young generation and with Concurrent Mark and Sweep for the old generation.</p>
+<p>For each collector the JMX API exposes the following information:</p>
+<ul>
+<li>CollectionCount – the total number of times this collector has run in this JVM,</li>
+<li>CollectionTime – the accumulated duration of the collector running time. The time is the sum of the wall-clock time of all GC events,</li>
+<li>LastGcInfo – detailed information about the last garbage collection event. This information contains the duration of that event, and the start and end time of the event along with the usage of different memory pools before and after the last collection,</li>
+<li>MemoryPoolNames – names of the memory pools that this collector manages,</li>
+<li>Name – the name of the garbage collector</li>
+<li>ObjectName – the name of this MBean, as dictated by JMX specifications,</li>
+<li>Valid – shows whether this collector is valid in this JVM. I personally have never seen anything but “true” in here</li>
+</ul>
+<p>In my experience this information is not enough to make any conclusions about the efficiency of the garbage collector. The only case where it can be of any use is when you are willing to build custom software to get JMX notifications about garbage collection events. This approach can rarely be used as we will see in the next sections, which give better ways of getting beneficial insight into garbage collection activities.</p>
+<h2 id="jvisualvm">JVisualVM</h2><p><a href="http://docs.oracle.com/javase/7/docs/technotes/tools/share/jvisualvm.html">JVisualVM</a> adds extra information to the basic JMX client functionality via a separate plugin called “<a href="http://www.oracle.com/technetwork/java/visualgc-136680.html">VisualGC</a>”. It provides a real-time view into GC events and the occupancy of different memory regions inside JVM.</p>
+<p>The most common use-case for the Visual GC plugin is the monitoring of the locally running application, when an application developer or a performance specialist wants an easy way to get visual information about the general behavior of the GC during a test run of the application.</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvmsualvm-garbage-collection-monitoring.png"><img class="aligncenter size-medium wp-image-6041" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvmsualvm-garbage-collection-monitoring.png" alt="GC monitoring with JVisualVM" srcset="https://plumbr.io/app/uploads/2015/12/jvmsualvm-garbage-collection-monitoring.png 1600w, https://plumbr.io/app/uploads/2015/12/jvmsualvm-garbage-collection-monitoring-300x178.png 300w, https://plumbr.io/app/uploads/2015/12/jvmsualvm-garbage-collection-monitoring-1024x607.png 1024w, https://plumbr.io/app/uploads/2015/12/jvmsualvm-garbage-collection-monitoring-591x351.png 591w" sizes="(max-width: 1600px) 100vw, 1600px"></a></p>
+<p class="normal">On the left side of the charts you can see the real-time view of the current usages of the different memory pools: Metaspace or Permanent Generation, Old Generation, Eden Generation and two Survivor Spaces.</p>
+<p class="normal">On the right side, top two charts are not GC related, exposing JIT compilation times and class loading timings. The following six charts display the history of the memory pools usages, the number of GC collections of each pool and cumulative time of GC for that pool. In addition for each pool its current size, peak usage and maximum size are displayed.</p>
+<p class="normal">Below is the distribution of objects ages that currently reside in the Young generation. The full discussion of objects tenuring monitoring is outside of the scope of this chapter.</p>
+<p class="normal">When compared with pure JMX tools, the VisualGC add-on to JVisualVM does offer slightly better insight to the JVM, so when you have only these two tools in your toolkit, pick the VisualGC plug-in. If you can use any other solutions referred to in this chapter, read on. Alternative options can give you more information and better insight. There is however a particular use-case discussed in the “Profilers” section where JVisualVM is suitable for – namely allocation profiling, so by no means we are demoting the tool in general, just for the particular use case.</p>
+<h2 id="jstat">jstat</h2><p>The next tool to look at is also part of the standard JDK distribution. The tool is called “<a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/jstat.html">jstat</a>” – a Java Virtual Machine statistics monitoring tool. This is a command line tool that can be used to get metrics from the running JVM. The JVM connected can again either be local or remote. A full list of metrics that jstat is capable of exposing can be obtained by running “<em>jstat -option</em>” from the command line. The most commonly used options are:</p>
+<pre>+-----------------+---------------------------------------------------------------+
+|     Option      |                          Displays...                          |
++-----------------+---------------------------------------------------------------+
+|class            | Statistics on the behavior of the class loader                |
+|compiler         | Statistics  on  the behavior of the HotSpot Just-In-Time com- |
+|                 | piler                                                         |
+|gc               | Statistics on the behavior of the garbage collected heap      |
+|gccapacity       | Statistics of the capacities of  the  generations  and  their |
+|                 | corresponding spaces.                                         |
+|gccause          | Summary  of  garbage collection statistics (same as -gcutil), |
+|                 | with the cause  of  the  last  and  current  (if  applicable) |
+|                 | garbage collection events.                                    |
+|gcnew            | Statistics of the behavior of the new generation.             |
+|gcnewcapacity    | Statistics of the sizes of the new generations and its corre- |
+|                 | sponding spaces.                                              |
+|gcold            | Statistics of the behavior of the old and  permanent  genera- |
+|                 | tions.                                                        |
+|gcoldcapacity    | Statistics of the sizes of the old generation.                |
+|gcpermcapacity   | Statistics of the sizes of the permanent generation.          |
+|gcutil           | Summary of garbage collection statistics.                     |
+|printcompilation | Summary of garbage collection statistics.                     |
++-----------------+---------------------------------------------------------------+</pre>
+<p>This tool is extremely useful for getting a quick overview of JVM health to see whether the garbage collector behaves as expected. You can run it via “<em>jstat -gc -t PID 1s</em>”, for example, where PID is the process ID of the JVM you want to monitor. You can acquire PID via running “jps” to get the list of running Java processes. As a result, each second jstat will print a new line to the standard output similar to the following example:</p>
+<pre>Timestamp  S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT   
+200.0  	 8448.0 8448.0 8448.0  0.0   67712.0  67712.0   169344.0   169344.0  21248.0 20534.3 3072.0 2807.7     34    0.720  658   133.684  134.404
+201.0 	 8448.0 8448.0 8448.0  0.0   67712.0  67712.0   169344.0   169343.2  21248.0 20534.3 3072.0 2807.7     34    0.720  662   134.612  135.332
+202.0 	 8448.0 8448.0 8102.5  0.0   67712.0  67598.5   169344.0   169343.6  21248.0 20534.3 3072.0 2807.7     34    0.720  667   135.340  136.060
+203.0 	 8448.0 8448.0 8126.3  0.0   67712.0  67702.2   169344.0   169343.6  21248.0 20547.2 3072.0 2807.7     34    0.720  669   136.178  136.898
+204.0 	 8448.0 8448.0 8126.3  0.0   67712.0  67702.2   169344.0   169343.6  21248.0 20547.2 3072.0 2807.7     34    0.720  669   136.178  136.898
+205.0 	 8448.0 8448.0 8134.6  0.0   67712.0  67712.0   169344.0   169343.5  21248.0 20547.2 3072.0 2807.7     34    0.720  671   136.234  136.954
+206.0 	 8448.0 8448.0 8134.6  0.0   67712.0  67712.0   169344.0   169343.5  21248.0 20547.2 3072.0 2807.7     34    0.720  671   136.234  136.954
+207.0 	 8448.0 8448.0 8154.8  0.0   67712.0  67712.0   169344.0   169343.5  21248.0 20547.2 3072.0 2807.7     34    0.720  673   136.289  137.009
+208.0 	 8448.0 8448.0 8154.8  0.0   67712.0  67712.0   169344.0   169343.5  21248.0 20547.2 3072.0 2807.7     34    0.720  673   136.289  137.009</pre>
+<p>Let us interpret the output above using the explanation given to output attributes in the <a href="http://www.manpagez.com/man/1/jstat/">jstat manpage</a>. Using the knowledge acquired, we can see that:</p>
+<ul>
+<li>jstat connected to the JVM 200 seconds from the time this JVM was started. This information is present in the first column labeled “<em>Timestamp</em>”. As seen from the very same column, the jstat harvests information from the JVM once every second as specified in the “1s” argument given in the command.</li>
+<li>From the first line we can see that up to this point the young generation has been cleaned 34 times and the whole heap has been cleaned 658 times, as indicated by the “<em>YGC</em>” and “<em>FGC</em>” columns, respectively.</li>
+<li>The young generation garbage collector has been running for a total of 0.720 seconds, as indicated in the “<em>YGCT</em>” column.</li>
+<li>The total duration of the full GC has been 133.684 seconds, as indicated in the “<em>FGCT</em>” column. This should immediately catch our eye – we can see that out of the total 200 seconds the JVM has been running, <strong>66% of the time has been spent in Full GC cycles</strong>.</li>
+</ul>
+<p>The problem becomes even clearer when we look at the next line, harvesting information a second later.</p>
+<ul>
+<li>Now we can see that there have been four more Full GCs running during the one second between the last time <em>jstat</em> printed out the data as indicated in the “<em>FGC</em>” column.</li>
+<li>These four GC pauses have taken almost the entire second – as seen in the difference in the “<em>FGCT</em>” column. Compared to the first row, the Full GC has been running for <strong>928 milliseconds,</strong> or <strong>92.8% of the total time.</strong></li>
+<li>At the same time, as indicated by the “<em>OC</em>” and “<em>OU</em>” columns, we can see that from <strong>almost all of the old generation capacity </strong>of 169,344.0 KB (“<em>OC</em>“), after all the cleaning work that the four collection cycles tried to accomplish, 169,344.2 KB (“<em>OU</em>“) is <strong>still in use</strong>. Cleaning 800 bytes in 928 ms should not be considered a normal behavior.</li>
+</ul>
+<p>Only these two rows from the jstat output give us insight that something is terribly wrong with the application. Applying the same analytics to the next rows, we can confirm that the problem persists and is getting even worse.</p>
+<p>The JVM is almost stalled, with GC eating away more than 90% of the available computing power. And as a result of all this cleaning, almost all the old generation still remains in use, further confirming our doubts. As a matter of fact, the example died in under a minute later with a “<a href="https://plumbr.io/outofmemoryerror/gc-overhead-limit-exceeded">java.lang.OutOfMemoryError: GC overhead limit exceeded</a>” error, removing the last remaining doubts whether or not things are truly sour.</p>
+<p>As seen from the example, jstat output can quickly reveal symptoms about JVM health in terms of misbehaving garbage collectors. As general guidelines, just looking at the jstat output will quickly reveal the following symptoms:</p>
+<ul>
+<li>Changes in the last column, “<em>GCT</em>”, when compared to the total runtime of the JVM in the “<em>Timestamp</em>” column, give information about the overhead of garbage collection. If you see that every second, the value in that column increases significantly in comparison to the total runtime, a high overhead is exposed. How much GC overhead is tolerable is application-specific and should be derived from the performance requirements you have at hand, but as a ground rule, anything more than 10% looks truly suspicious.</li>
+<li>Rapid changes in the “<em>YGC</em>” and “<em>FGC</em>” columns tracking the young and Full GC counts also tend to expose problems. Much too frequent GC pauses when piling up again affect the throughput via adding many stop-the-world pauses for application threads.</li>
+<li>When you see that the old generation usage in the “<em>OU</em>” column is almost equal to the maximum capacity of the old generation in the “<em>OC</em>” column without a decrease after an increase in the “<em>FGC</em>” column count has signaled that old generation collection has occurred, you have exposed yet another symptom of poorly performing GC.</li>
+</ul>
+<h2 id="gc-logs">GC logs</h2><p>The next source for GC-related information is accessible via garbage collector logs. As they are built in the JVM, GC logs give you (arguably) the most useful and comprehensive overview about garbage collector activities. GC logs are <em>de facto</em> standard and should be referenced as the ultimate source of truth for garbage collector evaluation and optimization.</p>
+<p>A garbage collector log is in plain text and can be either printed out by the JVM to standard output or redirected to a file. There are many JVM options related to GC logging. For example, you can log the total time for which the application was stopped before and during each GC event (-<em>XX:+PrintGCApplicationStoppedTime</em>) or expose the information about different reference types being collected (<em>-XX:+PrintReferenceGC</em>).</p>
+<p>The minimum that each JVM should be logging can be achieved by specifying the following in your startup scripts:</p>
+<pre>-XX:+PrintGCTimeStamps -XX:+PrintGCDateStamps -XX:+PrintGCDetails -Xloggc:&lt;filename&gt;</pre>
+<p>This will instruct JVM to print every GC event to the log file and add the timestamp of each event to the log. The exact information exposed to the logs varies depending on the GC algorithm used. When using ParallelGC the output should look similar to the following:</p>
+<pre>199.879: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63998K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1473386 secs] [Times: user=0.43 sys=0.01, real=0.15 secs]
+200.027: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63998K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1567794 secs] [Times: user=0.41 sys=0.00, real=0.16 secs]
+200.184: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63998K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1621946 secs] [Times: user=0.43 sys=0.00, real=0.16 secs]
+200.346: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63998K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1547695 secs] [Times: user=0.41 sys=0.00, real=0.15 secs]
+200.502: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63999K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1563071 secs] [Times: user=0.42 sys=0.01, real=0.16 secs]
+200.659: [Full GC (Ergonomics) [PSYoungGen: 64000K-&gt;63999K(74240K)] [ParOldGen: 169318K-&gt;169318K(169472K)] 233318K-&gt;233317K(243712K), [Metaspace: 20427K-&gt;20427K(1067008K)], 0.1538778 secs] [Times: user=0.42 sys=0.00, real=0.16 secs]</pre>
+<p>These different formats are discussed in detail in the chapter “<a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations">GC Algorithms: Implementations</a>”, so if you are not familiar with the output, please read this chapter first. If you can already interpret the output above, then you are able to deduct that:</p>
+<ul>
+<li>The log is extracted around 200 seconds after the JVM was started.</li>
+<li>During the 780 milliseconds present in the logs, the JVM paused five times for GC (we are excluding the 6<sup>th</sup> pause as it started, not ended on the timestamp present). All these pauses were full GC pauses.</li>
+<li>The total duration of these pauses was 777 milliseconds, or <strong>99.6% of the total runtime.</strong></li>
+<li>At the same time, as seen from the old generation capacity and consumption, <strong>almost all of the old generation capacity </strong>(169,472 kB) <strong>remains used (169,318 K</strong>) after the GC has repeatedly tried to free up some memory.</li>
+</ul>
+<p>From the output, we can confirm that the application is not performing well in terms of GC. The JVM is almost stalled, with GC eating away more than 99% of the available computing power. And as a result of all this cleaning, almost all the old generation still remains in use, further confirming our suspicions. The example application, being the same as used in the previous <em>jstat</em> section, died in just a few minutes later with the “<a href="https://plumbr.io/outofmemoryerror/gc-overhead-limit-exceeded">java.lang.OutOfMemoryError: GC overhead limit exceeded</a>” error, confirming that the problem was severe.</p>
+<p>As seen from the example, GC logs are valuable input to reveal symptoms about JVM health in terms of misbehaving garbage collectors. As general guidelines, the following symptoms can quickly be revealed by just looking at GC logs:</p>
+<ul>
+<li>Too much GC overhead. When the total time for GC pauses is too long, the throughput of the application suffers. The limit is application-specific, but as a general rule anything over 10% already looks suspicious.</li>
+<li>Excessively long individual pauses. Whenever an individual pause starts taking too long, the latency of the application starts to suffer. When the latency requirements require the transactions in the application to complete under 1,000 ms, for example, you cannot tolerate any GC pauses taking more than 1,000 ms.</li>
+<li>Old generation consumption at the limits. Whenever the old generation remains close to being fully utilized even after several full GC cycles, you face a situation in which GC becomes the bottleneck, either due to under-provisioning resources or due to a memory leak. This symptom always triggers GC overhead to go through the roof as well.</li>
+</ul>
+<p>As we can see, GC logs can give us very detailed information about what is going on inside the JVM in relation to garbage collection. However, for all but the most trivial applications, this results in vast amounts of data, which tend to be difficult to read and interpret by a human being.</p>
+<h2 id="gcviewer">GCViewer</h2><p class="normal">One way to cope with the information flood in GC logs is to write custom parsers for GC log files to visualize the information. In most cases it would not be a reasonable decision due to the complexity of different GC algorithms that are producing the information. Instead, a good way would be to start with a solution that already exists: <a href="https://github.com/chewiebug/GCViewer"><span style="color: #1155cc;">GCViewer</span></a>.</p>
+<p class="normal"><a href="https://github.com/chewiebug/GCViewer"><span style="color: #1155cc;">GCViewer</span></a> is an open source tool for parsing and analyzing GC log files. The GitHub web page provides a full description of all the presented metrics. In the following we will review the most common way to use this tool.</p>
+<p class="normal">The first step is to get useful garbage collection log files. They should reflect the usage scenario of your application that you are interested in during this performance optimization session. If your operational department complains that every Friday afternoon, the application slows down, and if you want to verify whether GC is the culprit, there is no point in analyzing GC logs from Monday morning.</p>
+<p class="normal">After you have received the log, you can feed it into GCViewer to see a result similar to the following:</p>
+<p class="normal"><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gcviewer-screenshot.png"><img class="aligncenter" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gcviewer-screenshot.png" alt="GCViewer"></a></p>
+<p>The chart area is devoted to the visual representation of GC events. The information available includes the sizes of all memory pools and GC events. In the picture above, only two metrics are visualized: the total used heap is visualized with blue lines and individual GC pause durations with black bars underneath.</p>
+<p>The first interesting thing that we can see from this picture is the fast growth of memory usage. In just around a minute the total heap consumption reaches almost the maximum heap available. This indicates a problem – almost all the heap is consumed and new allocations cannot proceed, triggering frequent full GC cycles. The application is either leaking memory or set to run with under-provisioned heap size.</p>
+<p>The next problem visible in the charts is the frequency and duration of GC pauses. We can see that after the initial 30 seconds GC is almost constantly running, with the longest pauses exceeding 1.4 seconds.</p>
+<p>On the right there is small panel with three tabs. Under the “Summary” tab the most interesting numbers are “Throughput” and “Number of GC pauses”, along with the “Number of full GC pauses”. Throughput shows the portion of the application run time that was devoted to running your application, as opposed to spending time in garbage collection.</p>
+<p>In our example we are facing throughput of 6.28%. This means that <strong>93.72% of the CPU time was&nbsp;spent on GC</strong>. It is a clear symptom of the application suffering – instead of spending precious CPU cycles on actual work, it spends most of the time trying to get rid of the garbage.</p>
+<p>The next interesting tab is “Pause”:</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gviewer-screenshot-pause.png"><img class="aligncenter" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gviewer-screenshot-pause.png" alt="GCViewer Pause screenshot"></a></p>
+<p>The “Pause” tab exposes the totals, averages, minimum and maximum values of GC pauses, both as a grand total and minor/major pauses separately. Optimizing the application for low latency, this gives the first glimpse of whether or not you are facing pauses that are too long. Again, we can get confirmation that both the <strong>accumulated pause duration of 634.59 seconds</strong> and the <strong>total number of GC pauses of 3,938</strong>&nbsp;is much too high, considering the total runtime of just over 11 minutes.</p>
+<p>More detailed information about GC events can be obtained from the “Event details” tab of the main area:</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gcviewer-screenshot-eventdetails.png"><img class="aligncenter" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/gcviewer-screenshot-eventdetails.png" alt="GCViewer event details"></a></p>
+<p>Here you can see a summary of all the important GC events recorded in the logs: minor and major pauses and concurrent, not stop-the-world GC events. In our case, we can see an obvious “winner”, a situation in which full GC events are contributing the most to both throughput and latency, by again confirming the fact that the <strong>3,928 full GC pauses took 634 seconds to complete</strong>.</p>
+<p>As seen from the example, GCViewer can quickly visualize symptoms that tell us whether or not the JVM is healthy in terms of misbehaving garbage collectors. As general guidelines, the following symptoms can quickly be revealed, visualizing the behavior of the GC:</p>
+<ul>
+<li>Low throughput. When the throughput of the application decreases and falls under a tolerable level, the total time that the application spends doing useful work gets reduced. What is “tolerable” depends on your application and its usage scenario. One rule of thumb says that any value below 90% should draw your attention and may require GC optimization.</li>
+<li>Excessively long individual GC pauses. Whenever an individual pause starts taking too long, the latency of the application starts to suffer. When the latency requirements require the transactions in the application to complete under 1,000 ms, for example, you cannot tolerate any GC pauses taking more than 1,000 ms.</li>
+<li>High heap consumption. Whenever the old generation remains close to being fully utilized even after several full GC cycles, you face a situation where the application is at its limits, either due to under-provisioning resources or due to a memory leak. This symptom always has a significant impact on throughput as well.</li>
+</ul>
+<p>As a general comment – visualizing GC logs is definitely something we recommend. Instead of directly working with lengthy and complex GC logs, you get access to humanly understandable visualization of the very same information.</p>
+<h2 id="profilers">Profilers</h2><p>The next set of tools to introduce is <a href="http://zeroturnaround.com/rebellabs/developer-productivity-report-2015-java-performance-survey-results/3/">profilers</a>. As opposed to the tools introduced in previous sections, GC-related areas are a subset of the functionality that profilers offer. In this section we focus only on the GC-related functionality of profilers.</p>
+<p>The chapter starts with a warning – profilers as a tool category tend to be misunderstood and used in situations for which there are better alternatives. There are times when profilers truly shine, for example when detecting CPU hot spots in your application code. But for several other situations there are better alternatives.</p>
+<p>This also applies to garbage collection tuning. When it comes to detecting whether or not you are suffering from GC-induced latency or throughput issues, you do not really need a profiler. The tools mentioned in previous chapters (<em>jstat</em> or raw/visualized GC logs) are quicker and cheaper ways of detecting whether or not you have anything to worry about in the first place. Especially when gathering data from production deployments, profilers should not be your tool&nbsp;of choice due to the introduced performance overhead.</p>
+<p>But whenever you have verified you indeed need to optimize the impact GC has on your application, profilers do have an important role to play by exposing information about object creation. If you take a step back – GC pauses are triggered by objects not fitting into a particular memory pool. This can only happen when you create objects. And all <strong>profilers are capable of</strong> tracking object allocations via allocation profiling, <strong>giving you information about what actually resides in the memory along with the allocation traces</strong>.</p>
+<p>Allocation profiling gives you information about the places where your application creates the majority of the objects. Exposing the top memory consuming objects and the threads in your application that produce the largest number of objects is the benefit you should be after when using profilers for GC tuning.</p>
+<p>In the following sections we will see three different allocation profilers in action: hprof, JVisualVM and AProf. There are plenty more different profilers out there to choose from, both commercial and free solutions, but the functionality and benefits of each are similar to the ones discussed in the following sections.</p>
+<h3 id="hprof">hprof</h3><p>Bundled with the JDK distribution is <a href="http://docs.oracle.com/javase/8/docs/technotes/samples/hprof.html">hprof profiler</a>. As it is present in all environments, this is the first profiler to be considered when harvesting information.</p>
+<p>To run your application with hprof, you need to modify the startup scripts of the JVM similarly to the following example:</p>
+<pre>java -agentlib:hprof=heap=sites com.yourcompany.YourApplication</pre>
+<p>On application exit, it will dump the allocation information to a <em>java.hprof.txt</em> file to the working directory. Open the file with a text editor of your choice and search for the phrase “SITES BEGIN” giving you information similar to the following:</p>
+<pre>SITES BEGIN (ordered by live bytes) Tue Dec  8 11:16:15 2015
+          percent          live          alloc'ed  stack class
+ rank   self  accum     bytes objs     bytes  objs trace name
+    1  64.43% 4.43%   8370336 20121  27513408 66138 302116 int[]
+    2  3.26% 88.49%    482976 20124   1587696 66154 302104 java.util.ArrayList
+    3  1.76% 88.74%    241704 20121   1587312 66138 302115 eu.plumbr.demo.largeheap.ClonableClass0006
+    ... cut for brevity ...
+SITES END</pre>
+<p>From the above, we can see the allocations ranked by the number of objects created per allocation. The first line shows that 64.43% of all objects were integer arrays (<em>int[]</em>) created at the site identified by the number <em>302116</em>. Searching the file for “TRACE 302116” gives us the following information:</p>
+<pre>TRACE 302116:
+	eu.plumbr.demo.largeheap.ClonableClass0006.&lt;init&gt;(GeneratorClass.java:11)
+	sun.reflect.GeneratedConstructorAccessor7.newInstance(&lt;Unknown Source&gt;:Unknown line)
+	sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	java.lang.reflect.Constructor.newInstance(Constructor.java:422)</pre>
+<p>Now, knowing that 64.43% of the objects were allocated as integer arrays in the <em>ClonableClass0006</em> constructor, in the line 11, you can proceed with optimizing the code to reduce the burden on GC.</p>
+<h3 id="java-visualvm">Java VisualVM</h3><p>JVisualVM makes a second appearance in this chapter. In the first section we ruled JVisualVM out from the list of tools monitoring your JVM for GC behavior, but in this section we will demonstrate its strengths in allocation profiling.</p>
+<p>Attaching JVisualVM to your JVM is done via GUI where you can attach the profiler to a running JVM. After attaching the profiler:</p>
+<ol>
+<li>Open the “Profiler” tab and make sure that under the “Settings” checkbox you have enabled “Record allocations stack traces”.</li>
+<li>Click the “Memory” button to start memory profiling.</li>
+<li>Let your application run for some time to gather enough information about object allocations.</li>
+<li>Click the “Snapshot” button. This will give you a snapshot of the profiling information gathered.</li>
+</ol>
+<p>After completing the steps above, you are exposed to information similar to the following:</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvisualvm-top-objects.png"><img class="aligncenter size-full wp-image-6066" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvisualvm-top-objects.png" alt="jvisualvm allocation profiler" srcset="https://plumbr.io/app/uploads/2015/12/jvisualvm-top-objects.png 3104w, https://plumbr.io/app/uploads/2015/12/jvisualvm-top-objects-300x178.png 300w, https://plumbr.io/app/uploads/2015/12/jvisualvm-top-objects-1024x608.png 1024w, https://plumbr.io/app/uploads/2015/12/jvisualvm-top-objects-591x351.png 591w" sizes="(max-width: 3104px) 100vw, 3104px"></a></p>
+<p>From the above, we can see the allocations ranked by the number of objects created per class. In the very first line we can see that the vast majority of all objects allocated were <em>int[]</em> arrays. By right-clicking the row you can access all stack traces where those objects were allocated:</p>
+<p><a href="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvisualvm-allocation-traces.png"><img class="aligncenter size-full wp-image-6065" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/jvisualvm-allocation-traces.png" alt="jvisualvm allocation profiling" srcset="https://plumbr.io/app/uploads/2015/12/jvisualvm-allocation-traces.png 3104w, https://plumbr.io/app/uploads/2015/12/jvisualvm-allocation-traces-300x178.png 300w, https://plumbr.io/app/uploads/2015/12/jvisualvm-allocation-traces-1024x608.png 1024w, https://plumbr.io/app/uploads/2015/12/jvisualvm-allocation-traces-591x351.png 591w" sizes="(max-width: 3104px) 100vw, 3104px"></a></p>
+<p>Compared to hprof, JVisualVM makes the information a bit easier to process – for example in the screenshot above you can see that all allocation traces for the <em>int[]</em> are exposed in single view, so you can escape the potentially repetitive process of matching different allocation traces.</p>
+<h3 id="aprof">AProf</h3><p>Last, but not least, is <a href="https://code.devexperts.com/display/AProf/About+Aprof">AProf</a> by Devexperts. AProf is a memory allocation profiler packaged as a Java agent.</p>
+<p>To run your application with AProf, you need to modify the startup scripts of the JVM similarly to the following example:</p>
+<pre>java -javaagent:/path-to/aprof.jar com.yourcompany.YourApplication</pre>
+<p>Now, after restarting the application, an <em>aprof.txt</em> file will be created to the working directory. The file is updated once every minute and contains information similar to the following:</p>
+<pre>========================================================================================================================
+TOTAL allocation dump for 91,289 ms (0h01m31s)
+Allocated 1,769,670,584 bytes in 24,868,088 objects of 425 classes in 2,127 locations
+========================================================================================================================
+
+Top allocation-inducing locations with the data types allocated from them
+------------------------------------------------------------------------------------------------------------------------
+eu.plumbr.demo.largeheap.ManyTargetsGarbageProducer.newRandomClassObject: 1,423,675,776 (80.44%) bytes in 17,113,721 (68.81%) objects (avg size 83 bytes)
+	int[]: 711,322,976 (40.19%) bytes in 1,709,911 (6.87%) objects (avg size 416 bytes)
+	char[]: 369,550,816 (20.88%) bytes in 5,132,759 (20.63%) objects (avg size 72 bytes)
+	java.lang.reflect.Constructor: 136,800,000 (7.73%) bytes in 1,710,000 (6.87%) objects (avg size 80 bytes)
+	java.lang.Object[]: 41,079,872 (2.32%) bytes in 1,710,712 (6.87%) objects (avg size 24 bytes)
+	java.lang.String: 41,063,496 (2.32%) bytes in 1,710,979 (6.88%) objects (avg size 24 bytes)
+	java.util.ArrayList: 41,050,680 (2.31%) bytes in 1,710,445 (6.87%) objects (avg size 24 bytes)
+          ... cut for brevity ... </pre>
+<p>In the output above allocations are ordered by size. From the above you can see right away that 80.44% of the bytes and 68.81% of the objects were allocated in the <em>ManyTargetsGarbageProducer.newRandomClassObject() </em>method. Out of these, <em>int[]</em> arrays took the most space with 40.19% of total memory consumption.</p>
+<p>Scrolling further down the file, you will discover a block with allocation traces, also ordered by allocation sizes:</p>
+<pre>Top allocated data types with reverse location traces
+------------------------------------------------------------------------------------------------------------------------
+int[]: 725,306,304 (40.98%) bytes in 1,954,234 (7.85%) objects (avg size 371 bytes)
+	eu.plumbr.demo.largeheap.ClonableClass0006.<init>: 38,357,696 (2.16%) bytes in 92,206 (0.37%) objects (avg size 416 bytes)
+		java.lang.reflect.Constructor.newInstance: 38,357,696 (2.16%) bytes in 92,206 (0.37%) objects (avg size 416 bytes)
+			eu.plumbr.demo.largeheap.ManyTargetsGarbageProducer.newRandomClassObject: 38,357,280 (2.16%) bytes in 92,205 (0.37%) objects (avg size 416 bytes)
+			java.lang.reflect.Constructor.newInstance: 416 (0.00%) bytes in 1 (0.00%) objects (avg size 416 bytes)
+... cut for brevity ... </init></pre>
+<p>From the above we can see the allocations for <em>int[]</em> arrays, again zooming in to the <em>ClonableClass0006</em> constructor where these arrays were created.</p>
+<p>So, like other solutions, AProf exposed information about allocation size and locations, making it possible to zoom in to the most memory-hungry parts of your application. However, in our opinion AProf is the most useful allocation profiler, as it focuses on just one thing and does it extremely well. In addition, this open-source tool is free and has the least overhead compared to alternatives.</p>
+
+				            </div>
+        </div>
+    </div>
+</div>
+
+	<div id="footer">
+		<div class="wrap">
+			<div id="menu-footer" class="row clear fat-footer"><div class="col-2"><ul><li class="title"><strong>Products &amp; Services</strong></li><li><a href="https://plumbr.io/application-monitoring">Application Monitoring</a></li><li><a href="https://plumbr.io/product/rum">Real-User Monitoring</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Company</strong></li><li><a href="https://plumbr.io/about-us">About us</a></li><li><a href="https://plumbr.io/join-us">Join us</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Support</strong></li><li><a href="https://plumbr.io/support/manual">Manual</a></li><li><a href="https://plumbr.io/support/what-is-plumbr-2">FAQ</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Resources</strong></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/java-garbage-collection-handbook">Garbage Collection Handbook</a></li><li><a href="https://plumbr.io/outofmemoryerror">Memory Leak Handbook</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Pricing</strong></li><li><a href="https://plumbr.io/pricing">Pricing</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Integrations</strong></li><li><a href="https://plumbr.io/support/manual#browser-agent-api">Browser Agent API</a></li><li><a href="https://plumbr.io/support/manual#agent-api">Java Agent API</a></li><li><a href="https://app.plumbr.io/docs">Server API</a></li><li><a href="https://plumbr.io/integrations/nagios">Nagios</a></li><li><a href="https://plumbr.io/integrations/prometheus">Prometheus</a></li><li><a href="https://plumbr.io/integrations/zabbix">Zabbix</a></li></ul></div></div><div class="textwidget custom-html-widget"><ul class="social">
+	<li><a href="mailto:support@plumbr.io"><i class="icon icon-mail-alt"></i></a></li>
+	<li><a target="_blank" href="https://twitter.com/JavaPlumbr" rel="noopener noreferrer"><i class="icon icon-twitter-squared"></i></a></li>
+	<li><a target="_blank" href="https://www.linkedin.com/company/plumbr" rel="noopener noreferrer"><i class="icon icon-linkedin-squared"></i></a></li>
+	<li>
+<a style="display: flex;" href="https://www.capterra.com/reviews/151215/Plumbr?utm_source=vendor&amp;utm_medium=badge&amp;utm_campaign=capterra_reviews_badge">  <img alt="capterra" style="height: 23px;
+width: 45px;" border="0" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/67206f388f45e0bc89ee313994c73a7d.png"></a>
+</li>
+</ul>
+<p id="copyright">© Copyright Plumbr. All Rights Reserved. </p></div>		</div>
+	</div>
+	
+<div id="modal-wrap">
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	<div class="modal login" id="modal-login">
+	<a href="https://plumbr.io/handbook/gc-tuning-measuring#" id="modal-login-close" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Log In</h2>
+	<form id="modal-login-form">
+		<dl class="form">
+			<dt><label for="login-mail">Your e-mail</label></dt>
+			<dd>
+				<input name="userName" type="email" id="login-mail" class="txt" maxlength="255" autofocus="autofocus" tabindex="1">
+			</dd>
+			<dt><label for="login-password">Password</label></dt>
+			<dd>
+				<input name="password" type="password" id="login-password" class="txt" maxlength="255" tabindex="2">
+				<a href="https://plumbr.io/handbook/gc-tuning-measuring#" id="forgot-password" data-modal="modal-new-password" tabindex="5">Forgot your password?</a>
+			</dd>
+			<dd><input name="isFromComment" type="hidden" id="login-comment" class="txt" value="false"></dd>
+		</dl>
+		<p class="form-action"><input id="modal-login-submit" type="submit" class="btn big" value="LOG IN" tabindex="3"></p>
+	</form>
+</div>
+	<div class="modal login" id="modal-new-password">
+	<a href="https://plumbr.io/handbook/gc-tuning-measuring#" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Reset password</h2>
+	<p>You will receive a link to create a new password via email.</p>
+
+	<div class="msg-icon hidden" id="reset-success">
+		<i class="icon icon-ok"></i>
+
+		<div class="aligner">
+			<p>Instructions on how to change your password have been sent to your e-mail.</p>
+		</div>
+	</div>
+
+	<form>
+		<dl class="form">
+			<dt><label for="new-mail">Email</label></dt>
+			<dd><input name="email" type="email" id="new-mail" class="txt"></dd>
+		</dl>
+		<p class="form-action"><input type="submit" class="btn big" value="Get new password"></p>
+	</form>
+</div>
+	<div class="modal signup" id="modal-register">
+	<a href="https://plumbr.io/handbook/gc-tuning-measuring#" class="close"><i class="icon icon-cancel"></i></a>
+	<div class="register">
+		<h2>Notification</h2>
+		<p class="info">Plumbr has been acquired by Splunk and no longer offers trial access to its product.
+		Read more <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">here</a></p>
+	</div>
+</div>
+
+	<div class="modal video" id="modal-video">
+		<a id="close-video" href="https://plumbr.io/handbook/gc-tuning-measuring#" class="close"><i class="icon icon-cancel"></i></a>
+		<div class="flex-video">
+			<div id="video01"></div>
+		</div>
+	</div>
+
+	
+	
+	
+
+
+
+
+
+</div>
+	
+<div id="cookie-consent" class="cookies" style="display: none;">
+    <div id="overview">
+        <p>This site uses cookies in order to provide a better user experience to you.</p>
+
+        <div class="buttons">
+            <button id="acceptAll" class="cbtn wide">Accept all cookies</button>
+            <button id="cookieSettings" class="cbtn wide deny">Cookie settings</button>
+        </div>
+    </div>
+
+    <div id="settings" class="hidden">
+        <div>
+            <label class="cookie-label disabled">
+                Required cookies
+                <input checked="true" type="checkbox" disabled="">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies are required to enable core site functionality.</p>
+        </div>
+
+        <div class="cookie-type">
+            <label class="cookie-label">
+                Statistics &amp; analytics cookies
+                <input id="analytics-checkbox" type="checkbox">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies give us information about how you use our website and allow us to improve
+                the user experience.</p>
+        </div>
+
+        <p>To learn more about our cookie usage click <a href="https://plumbr.io/support/plumbr-cookies" target="_blank">here</a>.</p>
+
+        <div style="margin-top: 10px;">
+            <button id="cookieCancel" class="cbtn">Cancel</button>
+            <button id="cookieSave" class="cbtn">Save</button>
+        </div>
+    </div>
+</div>
+	
+<script type="text/javascript">
+/* <![CDATA[ */
+var leadin_wordpress = {"userRole":"visitor","pageType":"post","leadinPluginVersion":"7.48.24"};
+/* ]]> */
+</script>
+<script async="" defer="" id="hs-script-loader" type="text/javascript" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(2).download"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var param = {"portalUrl":"https:\/\/app.plumbr.io"};
+/* ]]> */
+</script>
+
+
+
+<script type="text/javascript">
+/* <![CDATA[ */
+var local = {"isSupportIndex":"","isSupportType":"","isEmailLandingPage":"","isSearch":"","ajaxurl":"https:\/\/plumbr.io\/wp\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+
+
+
+
+
+<script type="text/javascript" defer="" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/autoptimize_80f1fdb2d70c854f88929cb5e1e65e79.js.download"></script>
+
+<iframe owner="archetype" title="archetype" style="display: none; visibility: hidden;" src="./GC Tuning_ Tooling _ Plumbr – User Experience &amp; Application Performance Monitoring_files/saved_resource.html"></iframe></body></html>

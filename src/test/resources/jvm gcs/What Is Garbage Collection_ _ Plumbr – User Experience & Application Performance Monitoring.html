@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<!-- saved from url=(0053)https://plumbr.io/handbook/what-is-garbage-collection -->
+<html lang="en" style="margin-right: 0px;"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+		<link rel="shortcut icon" href="https://plumbr.io/app/themes/plumbr/dist/images/favicon_9b72e733.png">
+
+	<title>What Is Garbage Collection? | Plumbr – User Experience &amp; Application Performance Monitoring</title>
+
+<!-- The SEO Framework by Sybre Waaijer -->
+<meta name="description" content="At first sight, garbage collection should be dealing with what the name suggests – finding and throwing away the garbage. In reality it is doing exactly the…">
+<meta property="og:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta property="og:image:width" content="980">
+<meta property="og:image:height" content="370">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="What Is Garbage Collection? | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="og:description" content="At first sight, garbage collection should be dealing with what the name suggests – finding and throwing away the garbage. In reality it is doing exactly the opposite. Garbage Collection is tracking…">
+<meta property="og:url" content="https://plumbr.io/handbook/what-is-garbage-collection">
+<meta property="og:site_name" content="Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="article:publisher" content="https://www.facebook.com/javaplumbr">
+<meta property="article:published_time" content="2015-05-04T22:13+00:00">
+<meta property="article:modified_time" content="2018-12-12T13:16-01:00">
+<meta property="og:updated_time" content="2018-12-12T13:16-01:00">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@JavaPlumbr">
+<meta name="twitter:title" content="What Is Garbage Collection? | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta name="twitter:description" content="At first sight, garbage collection should be dealing with what the name suggests – finding and throwing away the garbage. In reality it is doing exactly the opposite. Garbage Collection is tracking…">
+<meta name="twitter:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta name="twitter:image:width" content="980">
+<meta name="twitter:image:height" content="370">
+<link rel="canonical" href="https://plumbr.io/handbook/what-is-garbage-collection">
+<script src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/collectedforms.js.download" type="text/javascript" id="CollectedForms-5894543" crossorigin="anonymous" data-leadin-portal-id="5894543" data-leadin-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js.download" type="text/javascript" id="hs-analytics"></script><script src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(1).download" type="text/javascript" id="cookieBanner-5894543" data-cookieconsent="ignore" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script async="" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/analytics.js.download"></script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://plumbr.io/","name":"Plumbr &#8211; User Experience &amp; Application Performance Monitoring"}},{"@type":"ListItem","position":2,"item":{"@id":"https://plumbr.io/handbook/java-garbage-collection-handbook","name":"Java Garbage Collection handbook"}},{"@type":"ListItem","position":3,"item":{"@id":"https://plumbr.io/handbook/what-is-garbage-collection","name":"What Is Garbage Collection?"}}]}</script>
+<!-- / The SEO Framework by Sybre Waaijer | 3.54ms meta | 0.38ms boot -->
+
+<link rel="dns-prefetch" href="https://js.hs-scripts.com/">
+<link rel="dns-prefetch" href="https://use.typekit.net/">
+<link rel="stylesheet" id="wp-block-library-css" href="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/main.css-css" href="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/main_113b80ea.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/typekit.css-css" href="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/thh1ylu.css" type="text/css" media="all">
+
+<link rel="https://api.w.org/" href="https://plumbr.io/wp-json/">
+<link rel="alternate" type="application/json+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fwhat-is-garbage-collection">
+<link rel="alternate" type="text/xml+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fwhat-is-garbage-collection&amp;format=xml">
+			<!-- DO NOT COPY THIS SNIPPET! Start of Page Analytics Tracking for HubSpot WordPress plugin v7.48.24-->
+			<script type="text/javascript">
+				var _hsq = _hsq || [];
+				_hsq.push(["setContentType", "blog-post"]);
+			</script>
+			<!-- DO NOT COPY THIS SNIPPET! End of Page Analytics Tracking for HubSpot WordPress plugin -->
+						<script>
+				(function() {
+					var hbspt = window.hbspt = window.hbspt || {};
+					hbspt.forms = hbspt.forms || {};
+					hbspt._wpFormsQueue = [];
+					hbspt.enqueueForm = function(formDef) {
+						if (hbspt.forms && hbspt.forms.create) {
+							hbspt.forms.create(formDef);
+						} else {
+							hbspt._wpFormsQueue.push(formDef);
+						}
+					}
+					if (!window.hbspt.forms.create) {
+						Object.defineProperty(window.hbspt.forms, 'create', {
+							configurable: true,
+							get: function() {
+								return hbspt._wpCreateForm;
+							},
+							set: function(value) {
+								hbspt._wpCreateForm = value;
+								while (hbspt._wpFormsQueue.length) {
+									var formDef = hbspt._wpFormsQueue.shift();
+									if (!document.currentScript) {
+										var formScriptId = 'leadin-forms-v2-js';
+										hubspot.utils.currentScript = document.getElementById(formScriptId);
+									}
+									hbspt._wpCreateForm.call(hbspt.forms, formDef);
+								}
+							},
+						});
+					}
+				})();
+			</script>
+		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+			<link rel="stylesheet" href="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/prettify.css">
+	
+	    <script>
+        (function () {
+            var RDECODE = /(%[0-9A-Z]{2})+/g;
+
+            function plumbrGetCookie(e) {
+                var o = document.cookie ? document.cookie.split("; ") : [];
+                for (var c = 0; c < o.length; c++) {
+                    var n = o[c].indexOf("=");
+                    if (e === o[c].slice(0, n).replace(RDECODE, decodeURIComponent)) {
+                        return o[c].slice(n + 1).replace(RDECODE, decodeURIComponent)
+                    }
+                }
+            }
+            try {
+                var plumbrConsentCookie = plumbrGetCookie('plumbrCookieConsent')
+                if (plumbrConsentCookie) {
+                    window.plumbrConsent = JSON.parse(plumbrConsentCookie);
+                }
+            } catch (e) {
+                console.error('Cookie error')
+            }
+        })()
+    </script>
+	<script src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/pa-early.js.download" crossorigin="anonymous" data-plumbr-lateinit=""></script>
+	<script>
+		var paConf = {
+            "accountId": "k8g0ta8m6e7gsb2afhq6qm5efh",
+            "serverUrl": "https://plumbr.plumbr.io",
+            "appName": "plumbr.io"
+		}
+
+		if (!window.plumbrConsent || !window.plumbrConsent.analytics) {
+            paConf["tracking"] = {
+                "user": false,
+                "session": false
+            };
+        }
+
+        PLUMBR.init(paConf);
+	</script>
+
+    
+    <script>
+		if (!window.plumbrConsentCookie || !window.plumbrConsentCookie.analytics) {
+            window['ga-disable-UA-25569981-1'] = true;
+		}
+
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-25569981-1', 'auto');
+        ga('require', 'displayfeatures');
+        ga('require', 'eventTracker');
+        ga('require', 'outboundLinkTracker');
+        ga('send', 'pageview');
+    </script>
+
+	<script type="application/ld+json">
+	{
+		"@context" : "http://schema.org",
+		"@type"    : "Organization",
+		"name"     : "Plumbr &#8211; User Experience &amp; Application Performance Monitoring",
+		"url" 	   : "https://plumbr.io",
+		"sameAs"   : [
+			"https://www.facebook.com/javaplumbr",
+            "https://twitter.com/JavaPlumbr",
+            "https://www.linkedin.com/company/plumbr"
+		]
+	}
+</script></head>
+
+<body class=" ">
+<div class="top-banner">
+	Splunk Completes Acquisition of Plumbr <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">Learn more <i class="icon icon-right-open"></i></a>
+</div>
+<div id="header" class="clear">
+	<div class="wrap clear">
+		<p id="logo"><a href="https://plumbr.io/" class="icon icon-plumbr"></a></p>
+
+		<div id="user-box">
+			<a href="https://plumbr.io/handbook/what-is-garbage-collection#" data-modal="modal-login" class="js-show-logged-out">Log In</a>
+			<a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="btn cta" id="menu-toggler"><i class="icon icon-menu"></i></a>
+
+			<a id="continueMonitoring" href="https://app.plumbr.io/" class="btn cta btn-icon hidden js-show-logged-in"><i class="icon icon-chart-area hidden"></i> Continue Monitoring</a>
+		</div>
+
+					<ul id="nav" class="menu"><li class="parent"><a href="https://plumbr.io/product">Product</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/product/features">Features</a></li><li><a href="https://plumbr.io/product/apm">APM</a></li><li><a href="https://plumbr.io/product/rum">RUM</a></li><li><a href="https://plumbr.io/integrations">Integrations</a></li></ul></div></li><li class="parent"><a href="https://plumbr.io/solutions">Solutions</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/solutions/devops">Devops</a></li><li><a href="https://plumbr.io/solutions/oncall-engineers">On-call Engineers</a></li></ul></div></li><li><a href="https://plumbr.io/pricing">Pricing</a></li><li class="parent"><a href="https://plumbr.io/handbook/what-is-garbage-collection#">Resources</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/how-plumbr-works">How Plumbr Works</a></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/case-study/port-of-tallinn">Case studies</a></li><li><a href="https://plumbr.io/support">Support</a></li><li><a href="https://plumbr.io/root-causes">Root Causes</a></li></ul></div></li></ul>			</div>
+</div>
+
+
+
+<div id="user-nav">
+    <div class="wrap clear">
+        <ul>
+                <li class="">
+        <a href="https://plumbr.io/outofmemoryerror">
+            <i class="icon icon-book"></i>
+			java.lang.Outofmemoryerror        </a>
+    </li>
+    <li class="active">
+        <a href="https://plumbr.io/java-garbage-collection-handbook">
+            <i class="icon icon-book"></i>
+			Java Garbage Collection handbook        </a>
+    </li>
+	        </ul>
+    </div>
+</div>
+<div id="content">
+    <div class="wrap split">
+
+        <p id="sidebar-toggler">
+            <a href="https://plumbr.io/handbook/what-is-garbage-collection#" data-label="Close categories">
+                <i class="icon icon-menu"></i>
+                <i class="icon icon-cancel"></i>
+                <span class="label">Handbook menu</span>
+            </a>
+        </p>
+
+        <div id="sidebar">
+
+			    <div class="floating-wrap" style="padding-top: 0px;">
+        <div class="floating-content" style="position: static; top: auto; left: 0px; bottom: auto; width: 226px; margin-bottom: 0px;">
+			
+							
+                <div class="box menu active open">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/what-is-garbage-collection">
+							What Is Garbage Collection?                        </a>
+						                            <a href="https://plumbr.io/handbook/what-is-garbage-collection" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#manual-memory-management">
+						Manual Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#on-demand">
+						Smart Pointers                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#automated-memory-management">
+						Automated Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#reference-counting">
+						Reference Counting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#mark-and-sweep">
+						Mark and Sweep                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-in-java">
+							Garbage Collection in Java                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-in-java" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#fragmenting-and-compacting">
+						Fragmenting and Compacting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#generational-hypothesis">
+						Generational Hypothesis                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#memory-pools">
+						Memory Pools                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#eden">
+						Eden                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#survivor-spaces">
+						Survivor Spaces                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#oldtenured-space">
+						Old Generation                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#permgen">
+						PermGen                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#metaspace">
+						Metaspace                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">
+						Minor GC vs Major GC vs Full GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#major-gc-vs-full-gc">
+						Major GC vs Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms">
+							GC Algorithms: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#marking-reachable-objects">
+						Marking Reachable Objects                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#removing-unused-objects">
+						Removing Unused Objects                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#sweep">
+						Sweep                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#compact">
+						Compact                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#copy">
+						Copy                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations">
+							GC Algorithms: Implementations                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-gc">
+						Serial GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-gc">
+						Parallel GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-mark-and-sweep">
+						Concurrent Mark and Sweep                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#g1">
+						G1 – Garbage First                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-fully-young">
+						Evacuation Pause: Fully Young                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-marking">
+						Concurrent Marking                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-mixed">
+						Evacuation Pause: Mixed                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#summary">
+						Summary                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#shenandoah">
+						Shenandoah                    </a>
+							                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning">
+							GC Tuning: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput-vs-latency-vs-capacity">
+						Core Concepts                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#latency">
+						Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput">
+						Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#capacity">
+						Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#example">
+						Example                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-latency">
+						Tuning for Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-throughput">
+						Tuning for Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-capacity">
+						Tuning for Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-measuring">
+							GC Tuning: Tooling                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-measuring" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jmx-api">
+						JMX API                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jvisualvm">
+						JVisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jstat">
+						jstat                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gc-logs">
+						GC logs                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gcviewer">
+						GCViewer                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#profilers">
+						Profilers                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#hprof">
+						hprof                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#java-visualvm">
+						Java VisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#aprof">
+						AProf                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-in-practice">
+							GC Tuning: In Practice                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-in-practice" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#high-allocation-rate">
+						High Allocation Rate                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-allocation-rate">
+						How to Measure Allocation Rate?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#premature-promotion">
+						Premature Promotion                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-promotion-rate">
+						How to Measure Promotion Rate                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-promotion">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-promotion">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-promotion">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-promotion">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#weak-soft-and-phantom-references">
+						Weak, Soft and Phantom References                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-references">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-references">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-references">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-references">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#other-examples">
+						Other Examples                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#rmi-gc">
+						RMI &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#jvmti-tagging-gc">
+						JVMTI tagging &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#humongous-allocations">
+						Humongous Allocations                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#conclusion">
+						Conclusion                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+			        </div>
+    </div>
+	
+        </div>
+        <div id="main">
+            <div class="article handbook">
+									
+<h1 class="highlight">What Is Garbage Collection?</h1>
+<p>At first sight, garbage collection should be dealing with what the name suggests&nbsp;– finding and throwing away the garbage. In reality it is doing exactly the opposite. Garbage Collection is tracking down all the objects that&nbsp;are still used and marks the rest as garbage. Bearing this in mind, we start digging into more details of how the process of automated memory reclamation called ‘Garbage Collection’ is implemented for&nbsp;Java Virtual Machine.</p>
+<p>Instead of rushing into specifics, we shall start from the very beginning, explaining the general nature of garbage collection and the core concepts and approaches.</p>
+<p><em>Disclaimer: This content focuses on Oracle Hotspot and OpenJDK behaviour. In other runtimes&nbsp;or even on other JVMs, such as jRockit or IBM J9, some of the aspects covered in this handbook&nbsp;can behave differently.</em></p>
+
+					<h2 id="manual-memory-management">Manual Memory Management</h2><p>Before we can start covering Garbage Collection in its modern form, let’s do a quick recap of days where you had to manually and explicitly allocate and free memory for your data. And if you ever forgot to free it, you would not be able to reuse the memory. The memory would be claimed but not used. Such a scenario is called a <strong>memory leak</strong>.</p>
+<p>Here is a simple example written in C using manual memory management:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-c"><span class="typ">int</span><span class="pln"> send_request</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="typ">size_t</span><span class="pln"> n </span><span class="pun">=</span><span class="pln"> read_size</span><span class="pun">();</span><span class="pln">
+    </span><span class="typ">int</span><span class="pln"> </span><span class="pun">*</span><span class="pln">elements </span><span class="pun">=</span><span class="pln"> malloc</span><span class="pun">(</span><span class="pln">n </span><span class="pun">*</span><span class="pln"> </span><span class="kwd">sizeof</span><span class="pun">(</span><span class="typ">int</span><span class="pun">));</span><span class="pln">
+
+    </span><span class="kwd">if</span><span class="pun">(</span><span class="pln">read_elements</span><span class="pun">(</span><span class="pln">n</span><span class="pun">,</span><span class="pln"> elements</span><span class="pun">)</span><span class="pln"> </span><span class="pun">&lt;</span><span class="pln"> n</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        </span><span class="com">// elements not freed!</span><span class="pln">
+        </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">-</span><span class="lit">1</span><span class="pun">;</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+
+    </span><span class="com">// …</span><span class="pln">
+
+    free</span><span class="pun">(</span><span class="pln">elements</span><span class="pun">)</span><span class="pln">
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="lit">0</span><span class="pun">;</span><span class="pln">
+</span><span class="pun">}</span><span class="pln">
+</span></code></pre>
+<p>As we can see, it is fairly easy to forget to free memory. Memory leaks used to be a lot more common problem than today. You could only really fight them by fixing your code. Thus, a much better approach would be to automate the reclamation of unused memory, eliminating the possibility of human error altogether. Such automation is called <b>Garbage Collection</b> (or GC for short).</p>
+<h3 id="on-demand">Smart Pointers</h3><p>One of the first ways to automate this was by using destructors. For instance, we could do the same thing in C++ using <em>vector</em>, the destructor of which will be automatically called when it’s no longer in scope:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-c"><span class="pln">
+</span><span class="typ">int</span><span class="pln"> send_request</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="typ">size_t</span><span class="pln"> n </span><span class="pun">=</span><span class="pln"> read_size</span><span class="pun">();</span><span class="pln">
+    </span><span class="typ">vector</span><span class="str">&lt;int&gt;</span><span class="pln"> elements </span><span class="pun">=</span><span class="pln"> </span><span class="typ">vector</span><span class="str">&lt;int&gt;</span><span class="pun">(</span><span class="pln">n</span><span class="pun">);</span><span class="pln">
+
+    </span><span class="kwd">if</span><span class="pun">(</span><span class="pln">read_elements</span><span class="pun">(</span><span class="pln">elements</span><span class="pun">.</span><span class="pln">size</span><span class="pun">(),</span><span class="pln"> </span><span class="pun">&amp;</span><span class="pln">elements</span><span class="pun">[</span><span class="lit">0</span><span class="pun">])</span><span class="pln"> </span><span class="pun">&lt;</span><span class="pln"> n</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        </span><span class="kwd">return</span><span class="pln"> </span><span class="pun">-</span><span class="lit">1</span><span class="pun">;</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="lit">0</span><span class="pun">;</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+<p>But in more complex cases, especially when sharing objects across multiple threads, just the destructor will not be sufficient. In comes the simplest form of garbage collection: reference counting. For each object, you simply know how many times it is referred to and when that count reaches zero the object can be safely reclaimed. A well-known example of that would be the shared pointers of C++:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-c"><span class="pln">
+</span><span class="typ">int</span><span class="pln"> send_request</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="typ">size_t</span><span class="pln"> n </span><span class="pun">=</span><span class="pln"> read_size</span><span class="pun">();</span><span class="pln">
+    </span><span class="kwd">auto</span><span class="pln"> elements </span><span class="pun">=</span><span class="pln"> make_shared</span><span class="pun">&lt;</span><span class="typ">vector</span><span class="str">&lt;int&gt;</span><span class="pun">&gt;();</span><span class="pln">
+
+    </span><span class="com">// read elements</span><span class="pln">
+
+    store_in_cache</span><span class="pun">(</span><span class="pln">elements</span><span class="pun">);</span><span class="pln">
+
+    </span><span class="com">// process elements further</span><span class="pln">
+
+    </span><span class="kwd">return</span><span class="pln"> </span><span class="lit">0</span><span class="pun">;</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+<p>Now, to avoid reading the elements next time the function is called, we may want to cache them. In such a case, destroying the vector when it’s out of scope is not an option. Therefore, we make use of&nbsp;<em>shared_ptr</em>.&nbsp;It keeps track of the number of references to it. This number increases as you pass it around and decreases as it leaves scope. As soon as the number of references reaches zero, the&nbsp;<em>shared_ptr</em>&nbsp;automatically deletes the underlying vector.</p>
+
+<h2 id="automated-memory-management">Automated Memory Management</h2><p>In the C++ code above, we still had to explicitly say when we want to have memory management to be taken care of. But what if we could make&nbsp;<em>all</em>&nbsp;the objects behave this way? That would be very handy, since the developers no longer have to think about cleaning up after themselves. The runtime will automatically understand that some memory is no longer used and frees it. In other words, it automatically&nbsp;<strong>collects the garbage</strong>. The first garbage collector was created in 1959 for Lisp and the technology has only advanced since then.</p>
+<h3 id="reference-counting">Reference Counting</h3><p>The idea that we have demonstrated with the shared pointers of C++ can be applied to all objects. Many languages such as Perl, Python or PHP take this approach. This is best illustrated with a picture:</p>
+<p><img class="aligncenter size-full wp-image-4916" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/Java-GC-counting-references1.png" alt="Java GC reference counting explained" width="580" height="208"></p>
+<p>The green clouds indicate that the object that they point to is still in use by the programmer. Technically, these may be things like a local variable in the currently executing method or a static variable or something else. It may vary from programming language to programming language so we will not focus on it here.</p>
+<p>The blue circles are the live objects in memory, with the numbers inside denoting their reference counts. Finally, the grey circles are objects that&nbsp;are not referenced from any object that is still explicitly in use (these are directly referenced to by the green clouds). The grey objects are thus garbage and could be cleaned by the Garbage Collector.</p>
+<p>This all looks really good, does it not? Well, it does, but the whole method has a huge drawback. It is quite easy to end up with a&nbsp;<strong>detached cycle</strong>&nbsp;of objects none of which are in scope yet due to cyclic references the count of their reference is not zero. Here’s an illustration:</p>
+<p><img class="aligncenter size-full wp-image-4917" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/Java-GC-cyclical-dependencies.png" alt="Avoid cyclic dependencies during garbage collection" width="580" height="208" srcset="https://plumbr.io/app/uploads/2015/05/Java-GC-cyclical-dependencies.png 580w, https://plumbr.io/app/uploads/2015/05/Java-GC-cyclical-dependencies-300x108.png 300w" sizes="(max-width: 580px) 100vw, 580px"></p>
+<p>See? The red objects are in fact garbage that the application does not use. But due to the limitations of reference counting there is still a memory leak.</p>
+<p>There are some ways to overcome this, such as using special ‘weak’ references or applying a separate algorithm for collecting cycles. The aforementioned languages – Perl, Python and PHP – all handle cycles in one way or another, but this is outside the scope of this handbook. Instead, we will start investigating the approach taken by the JVM in more details.</p>
+<h3 id="mark-and-sweep">Mark and Sweep</h3><p>First of all, the JVM is more specific about what constitutes reachability of an object. Instead of the vaguely defined green clouds that we saw on earlier chapters, we have a very specific and explicit set of objects that are called the <b>Garbage Collection Roots</b>:</p>
+<ul>
+<li>Local variables</li>
+<li>Active threads</li>
+<li>Static fields</li>
+<li>JNI references</li>
+</ul>
+<p>The method used by JVM to track down all the reachable (live) objects and to make sure the memory claimed by non-reachable objects can be reused is called the Mark and Sweep algorithm. It consists of two steps:</p>
+<ul>
+<li><strong>Marking</strong> is walking through all reachable objects, starting from GC roots and keeping a ledger in native memory about all such objects</li>
+<li><strong>Sweeping</strong> is making sure the memory addresses occupied by non-reachable objects can be reused by the next allocations.</li>
+</ul>
+<p>Different GC algorithms within the JVM, such as <em>Parallel Scavenge</em>, <em>Parallel Mark+Copy</em> or <em>CMS</em>, are implementing those phases slightly differently, but at the conceptual level the process remains similar to the two steps described above.</p>
+<p>A crucially important thing about this approach is that the cycles are no longer leaked:</p>
+<p><img class="aligncenter size-full wp-image-4919" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/Java-GC-mark-and-sweep.png" alt="Mark and Sweep Garbage Collection" width="580" height="208" srcset="https://plumbr.io/app/uploads/2015/05/Java-GC-mark-and-sweep.png 580w, https://plumbr.io/app/uploads/2015/05/Java-GC-mark-and-sweep-300x108.png 300w" sizes="(max-width: 580px) 100vw, 580px"></p>
+<p>The not-so-good thing is that the application threads need to be stopped for the collection to happen, as you cannot really count references if they keep changing all the time. Such a situation when the application is temporarily stopped so that the JVM can indulge in housekeeping activities is called a <strong>Stop The World pause</strong>. They may happen for many reasons, but garbage collection is by far the most popular one.</p>
+
+				            </div>
+        </div>
+    </div>
+</div>
+
+	<div id="footer">
+		<div class="wrap">
+			<div id="menu-footer" class="row clear fat-footer"><div class="col-2"><ul><li class="title"><strong>Products &amp; Services</strong></li><li><a href="https://plumbr.io/application-monitoring">Application Monitoring</a></li><li><a href="https://plumbr.io/product/rum">Real-User Monitoring</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Company</strong></li><li><a href="https://plumbr.io/about-us">About us</a></li><li><a href="https://plumbr.io/join-us">Join us</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Support</strong></li><li><a href="https://plumbr.io/support/manual">Manual</a></li><li><a href="https://plumbr.io/support/what-is-plumbr-2">FAQ</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Resources</strong></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/java-garbage-collection-handbook">Garbage Collection Handbook</a></li><li><a href="https://plumbr.io/outofmemoryerror">Memory Leak Handbook</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Pricing</strong></li><li><a href="https://plumbr.io/pricing">Pricing</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Integrations</strong></li><li><a href="https://plumbr.io/support/manual#browser-agent-api">Browser Agent API</a></li><li><a href="https://plumbr.io/support/manual#agent-api">Java Agent API</a></li><li><a href="https://app.plumbr.io/docs">Server API</a></li><li><a href="https://plumbr.io/integrations/nagios">Nagios</a></li><li><a href="https://plumbr.io/integrations/prometheus">Prometheus</a></li><li><a href="https://plumbr.io/integrations/zabbix">Zabbix</a></li></ul></div></div><div class="textwidget custom-html-widget"><ul class="social">
+	<li><a href="mailto:support@plumbr.io"><i class="icon icon-mail-alt"></i></a></li>
+	<li><a target="_blank" href="https://twitter.com/JavaPlumbr" rel="noopener noreferrer"><i class="icon icon-twitter-squared"></i></a></li>
+	<li><a target="_blank" href="https://www.linkedin.com/company/plumbr" rel="noopener noreferrer"><i class="icon icon-linkedin-squared"></i></a></li>
+	<li>
+<a style="display: flex;" href="https://www.capterra.com/reviews/151215/Plumbr?utm_source=vendor&amp;utm_medium=badge&amp;utm_campaign=capterra_reviews_badge">  <img alt="capterra" style="height: 23px;
+width: 45px;" border="0" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/67206f388f45e0bc89ee313994c73a7d.png"></a>
+</li>
+</ul>
+<p id="copyright">© Copyright Plumbr. All Rights Reserved. </p></div>		</div>
+	</div>
+	
+<div id="modal-wrap">
+	
+	
+	
+	
+	
+	
+	
+	
+	        <div class="modal full alt" id="leak-header">
+            <a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-header.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-growth">
+            <a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-growth.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-gc-impact">
+            <a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-gc-impact.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-pre-oom">
+            <a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-pre-oom.png" alt="">
+        </div>
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	<div class="modal login" id="modal-login">
+	<a href="https://plumbr.io/handbook/what-is-garbage-collection#" id="modal-login-close" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Log In</h2>
+	<form id="modal-login-form">
+		<dl class="form">
+			<dt><label for="login-mail">Your e-mail</label></dt>
+			<dd>
+				<input name="userName" type="email" id="login-mail" class="txt" maxlength="255" autofocus="autofocus" tabindex="1">
+			</dd>
+			<dt><label for="login-password">Password</label></dt>
+			<dd>
+				<input name="password" type="password" id="login-password" class="txt" maxlength="255" tabindex="2">
+				<a href="https://plumbr.io/handbook/what-is-garbage-collection#" id="forgot-password" data-modal="modal-new-password" tabindex="5">Forgot your password?</a>
+			</dd>
+			<dd><input name="isFromComment" type="hidden" id="login-comment" class="txt" value="false"></dd>
+		</dl>
+		<p class="form-action"><input id="modal-login-submit" type="submit" class="btn big" value="LOG IN" tabindex="3"></p>
+	</form>
+</div>
+	<div class="modal login" id="modal-new-password">
+	<a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Reset password</h2>
+	<p>You will receive a link to create a new password via email.</p>
+
+	<div class="msg-icon hidden" id="reset-success">
+		<i class="icon icon-ok"></i>
+
+		<div class="aligner">
+			<p>Instructions on how to change your password have been sent to your e-mail.</p>
+		</div>
+	</div>
+
+	<form>
+		<dl class="form">
+			<dt><label for="new-mail">Email</label></dt>
+			<dd><input name="email" type="email" id="new-mail" class="txt"></dd>
+		</dl>
+		<p class="form-action"><input type="submit" class="btn big" value="Get new password"></p>
+	</form>
+</div>
+	<div class="modal signup" id="modal-register">
+	<a href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+	<div class="register">
+		<h2>Notification</h2>
+		<p class="info">Plumbr has been acquired by Splunk and no longer offers trial access to its product.
+		Read more <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">here</a></p>
+	</div>
+</div>
+
+	<div class="modal video" id="modal-video">
+		<a id="close-video" href="https://plumbr.io/handbook/what-is-garbage-collection#" class="close"><i class="icon icon-cancel"></i></a>
+		<div class="flex-video">
+			<div id="video01"></div>
+		</div>
+	</div>
+
+	
+	
+	
+
+
+
+
+
+</div>
+	
+<div id="cookie-consent" class="cookies" style="display: none;">
+    <div id="overview">
+        <p>This site uses cookies in order to provide a better user experience to you.</p>
+
+        <div class="buttons">
+            <button id="acceptAll" class="cbtn wide">Accept all cookies</button>
+            <button id="cookieSettings" class="cbtn wide deny">Cookie settings</button>
+        </div>
+    </div>
+
+    <div id="settings" class="hidden">
+        <div>
+            <label class="cookie-label disabled">
+                Required cookies
+                <input checked="true" type="checkbox" disabled="">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies are required to enable core site functionality.</p>
+        </div>
+
+        <div class="cookie-type">
+            <label class="cookie-label">
+                Statistics &amp; analytics cookies
+                <input id="analytics-checkbox" type="checkbox">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies give us information about how you use our website and allow us to improve
+                the user experience.</p>
+        </div>
+
+        <p>To learn more about our cookie usage click <a href="https://plumbr.io/support/plumbr-cookies" target="_blank">here</a>.</p>
+
+        <div style="margin-top: 10px;">
+            <button id="cookieCancel" class="cbtn">Cancel</button>
+            <button id="cookieSave" class="cbtn">Save</button>
+        </div>
+    </div>
+</div>
+	
+<script type="text/javascript">
+/* <![CDATA[ */
+var leadin_wordpress = {"userRole":"visitor","pageType":"post","leadinPluginVersion":"7.48.24"};
+/* ]]> */
+</script>
+<script async="" defer="" id="hs-script-loader" type="text/javascript" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(2).download"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var param = {"portalUrl":"https:\/\/app.plumbr.io"};
+/* ]]> */
+</script>
+
+
+
+<script type="text/javascript">
+/* <![CDATA[ */
+var local = {"isSupportIndex":"","isSupportType":"","isEmailLandingPage":"","isSearch":"","ajaxurl":"https:\/\/plumbr.io\/wp\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+
+
+
+
+
+<script type="text/javascript" defer="" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/autoptimize_80f1fdb2d70c854f88929cb5e1e65e79.js.download"></script>
+
+<iframe owner="archetype" title="archetype" style="display: none; visibility: hidden;" src="./What Is Garbage Collection_ _ Plumbr – User Experience &amp; Application Performance Monitoring_files/saved_resource.html"></iframe></body></html>

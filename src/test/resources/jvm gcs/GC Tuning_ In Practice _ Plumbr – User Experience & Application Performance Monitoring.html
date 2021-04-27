@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<!-- saved from url=(0048)https://plumbr.io/handbook/gc-tuning-in-practice -->
+<html lang="en"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+		<link rel="shortcut icon" href="https://plumbr.io/app/themes/plumbr/dist/images/favicon_9b72e733.png">
+
+	<title>GC Tuning: In Practice | Plumbr – User Experience &amp; Application Performance Monitoring</title>
+
+<!-- The SEO Framework by Sybre Waaijer -->
+<meta name="description" content="Errors in applications could be caused by poor JVM performance, and other tricky causes. Use Plumbr to find root causes. This chapter covers several typical…">
+<meta property="og:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta property="og:image:width" content="980">
+<meta property="og:image:height" content="370">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GC Tuning: In Practice | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="og:description" content="Errors in applications could be caused by poor JVM performance, and other tricky causes. Use Plumbr to find root causes. This chapter covers several typical performance problems that one may encounter…">
+<meta property="og:url" content="https://plumbr.io/handbook/gc-tuning-in-practice">
+<meta property="og:site_name" content="Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="article:publisher" content="https://www.facebook.com/javaplumbr">
+<meta property="article:published_time" content="2015-05-04T22:15+00:00">
+<meta property="article:modified_time" content="2018-12-12T14:03-01:00">
+<meta property="og:updated_time" content="2018-12-12T14:03-01:00">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@JavaPlumbr">
+<meta name="twitter:title" content="GC Tuning: In Practice | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta name="twitter:description" content="Errors in applications could be caused by poor JVM performance, and other tricky causes. Use Plumbr to find root causes. This chapter covers several typical performance problems that one may encounter…">
+<meta name="twitter:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta name="twitter:image:width" content="980">
+<meta name="twitter:image:height" content="370">
+<link rel="canonical" href="https://plumbr.io/handbook/gc-tuning-in-practice">
+<script src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/collectedforms.js.download" type="text/javascript" id="CollectedForms-5894543" crossorigin="anonymous" data-leadin-portal-id="5894543" data-leadin-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js.download" type="text/javascript" id="hs-analytics"></script><script src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(1).download" type="text/javascript" id="cookieBanner-5894543" data-cookieconsent="ignore" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script async="" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/analytics.js.download"></script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://plumbr.io/","name":"Plumbr &#8211; User Experience &amp; Application Performance Monitoring"}},{"@type":"ListItem","position":2,"item":{"@id":"https://plumbr.io/handbook/java-garbage-collection-handbook","name":"Java Garbage Collection handbook"}},{"@type":"ListItem","position":3,"item":{"@id":"https://plumbr.io/handbook/gc-tuning-in-practice","name":"GC Tuning: In Practice"}}]}</script>
+<!-- / The SEO Framework by Sybre Waaijer | 3.48ms meta | 0.49ms boot -->
+
+<link rel="dns-prefetch" href="https://js.hs-scripts.com/">
+<link rel="dns-prefetch" href="https://use.typekit.net/">
+<link rel="stylesheet" id="wp-block-library-css" href="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/main.css-css" href="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/main_113b80ea.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/typekit.css-css" href="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/thh1ylu.css" type="text/css" media="all">
+
+<link rel="https://api.w.org/" href="https://plumbr.io/wp-json/">
+<link rel="alternate" type="application/json+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning-in-practice">
+<link rel="alternate" type="text/xml+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning-in-practice&amp;format=xml">
+			<!-- DO NOT COPY THIS SNIPPET! Start of Page Analytics Tracking for HubSpot WordPress plugin v7.48.24-->
+			<script type="text/javascript">
+				var _hsq = _hsq || [];
+				_hsq.push(["setContentType", "blog-post"]);
+			</script>
+			<!-- DO NOT COPY THIS SNIPPET! End of Page Analytics Tracking for HubSpot WordPress plugin -->
+						<script>
+				(function() {
+					var hbspt = window.hbspt = window.hbspt || {};
+					hbspt.forms = hbspt.forms || {};
+					hbspt._wpFormsQueue = [];
+					hbspt.enqueueForm = function(formDef) {
+						if (hbspt.forms && hbspt.forms.create) {
+							hbspt.forms.create(formDef);
+						} else {
+							hbspt._wpFormsQueue.push(formDef);
+						}
+					}
+					if (!window.hbspt.forms.create) {
+						Object.defineProperty(window.hbspt.forms, 'create', {
+							configurable: true,
+							get: function() {
+								return hbspt._wpCreateForm;
+							},
+							set: function(value) {
+								hbspt._wpCreateForm = value;
+								while (hbspt._wpFormsQueue.length) {
+									var formDef = hbspt._wpFormsQueue.shift();
+									if (!document.currentScript) {
+										var formScriptId = 'leadin-forms-v2-js';
+										hubspot.utils.currentScript = document.getElementById(formScriptId);
+									}
+									hbspt._wpCreateForm.call(hbspt.forms, formDef);
+								}
+							},
+						});
+					}
+				})();
+			</script>
+		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+			<link rel="stylesheet" href="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/prettify.css">
+	
+	    <script>
+        (function () {
+            var RDECODE = /(%[0-9A-Z]{2})+/g;
+
+            function plumbrGetCookie(e) {
+                var o = document.cookie ? document.cookie.split("; ") : [];
+                for (var c = 0; c < o.length; c++) {
+                    var n = o[c].indexOf("=");
+                    if (e === o[c].slice(0, n).replace(RDECODE, decodeURIComponent)) {
+                        return o[c].slice(n + 1).replace(RDECODE, decodeURIComponent)
+                    }
+                }
+            }
+            try {
+                var plumbrConsentCookie = plumbrGetCookie('plumbrCookieConsent')
+                if (plumbrConsentCookie) {
+                    window.plumbrConsent = JSON.parse(plumbrConsentCookie);
+                }
+            } catch (e) {
+                console.error('Cookie error')
+            }
+        })()
+    </script>
+	<script src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/pa-early.js.download" crossorigin="anonymous" data-plumbr-lateinit=""></script>
+	<script>
+		var paConf = {
+            "accountId": "k8g0ta8m6e7gsb2afhq6qm5efh",
+            "serverUrl": "https://plumbr.plumbr.io",
+            "appName": "plumbr.io"
+		}
+
+		if (!window.plumbrConsent || !window.plumbrConsent.analytics) {
+            paConf["tracking"] = {
+                "user": false,
+                "session": false
+            };
+        }
+
+        PLUMBR.init(paConf);
+	</script>
+
+    
+    <script>
+		if (!window.plumbrConsentCookie || !window.plumbrConsentCookie.analytics) {
+            window['ga-disable-UA-25569981-1'] = true;
+		}
+
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-25569981-1', 'auto');
+        ga('require', 'displayfeatures');
+        ga('require', 'eventTracker');
+        ga('require', 'outboundLinkTracker');
+        ga('send', 'pageview');
+    </script>
+
+	<script type="application/ld+json">
+	{
+		"@context" : "http://schema.org",
+		"@type"    : "Organization",
+		"name"     : "Plumbr &#8211; User Experience &amp; Application Performance Monitoring",
+		"url" 	   : "https://plumbr.io",
+		"sameAs"   : [
+			"https://www.facebook.com/javaplumbr",
+            "https://twitter.com/JavaPlumbr",
+            "https://www.linkedin.com/company/plumbr"
+		]
+	}
+</script></head>
+
+<body class=" ">
+<div class="top-banner">
+	Splunk Completes Acquisition of Plumbr <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">Learn more <i class="icon icon-right-open"></i></a>
+</div>
+<div id="header" class="clear">
+	<div class="wrap clear">
+		<p id="logo"><a href="https://plumbr.io/" class="icon icon-plumbr"></a></p>
+
+		<div id="user-box">
+			<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" data-modal="modal-login" class="js-show-logged-out">Log In</a>
+			<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" class="btn cta" id="menu-toggler"><i class="icon icon-menu"></i></a>
+
+			<a id="continueMonitoring" href="https://app.plumbr.io/" class="btn cta btn-icon hidden js-show-logged-in"><i class="icon icon-chart-area hidden"></i> Continue Monitoring</a>
+		</div>
+
+					<ul id="nav" class="menu"><li class="parent"><a href="https://plumbr.io/product">Product</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/product/features">Features</a></li><li><a href="https://plumbr.io/product/apm">APM</a></li><li><a href="https://plumbr.io/product/rum">RUM</a></li><li><a href="https://plumbr.io/integrations">Integrations</a></li></ul></div></li><li class="parent"><a href="https://plumbr.io/solutions">Solutions</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/solutions/devops">Devops</a></li><li><a href="https://plumbr.io/solutions/oncall-engineers">On-call Engineers</a></li></ul></div></li><li><a href="https://plumbr.io/pricing">Pricing</a></li><li class="parent"><a href="https://plumbr.io/handbook/gc-tuning-in-practice#">Resources</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/how-plumbr-works">How Plumbr Works</a></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/case-study/port-of-tallinn">Case studies</a></li><li><a href="https://plumbr.io/support">Support</a></li><li><a href="https://plumbr.io/root-causes">Root Causes</a></li></ul></div></li></ul>			</div>
+</div>
+
+
+
+<div id="user-nav">
+    <div class="wrap clear">
+        <ul>
+                <li class="">
+        <a href="https://plumbr.io/outofmemoryerror">
+            <i class="icon icon-book"></i>
+			java.lang.Outofmemoryerror        </a>
+    </li>
+    <li class="active">
+        <a href="https://plumbr.io/java-garbage-collection-handbook">
+            <i class="icon icon-book"></i>
+			Java Garbage Collection handbook        </a>
+    </li>
+	        </ul>
+    </div>
+</div>
+<div id="content">
+    <div class="wrap split">
+
+        <p id="sidebar-toggler">
+            <a href="https://plumbr.io/handbook/gc-tuning-in-practice#" data-label="Close categories">
+                <i class="icon icon-menu"></i>
+                <i class="icon icon-cancel"></i>
+                <span class="label">Handbook menu</span>
+            </a>
+        </p>
+
+        <div id="sidebar">
+
+			    <div class="floating-wrap" style="padding-top: 0px;">
+        <div class="floating-content" style="position: static; top: auto; left: 0px; bottom: auto; width: 226px; margin-bottom: 0px;">
+			
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/what-is-garbage-collection">
+							What Is Garbage Collection?                        </a>
+						                            <a href="https://plumbr.io/handbook/what-is-garbage-collection" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#manual-memory-management">
+						Manual Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#on-demand">
+						Smart Pointers                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#automated-memory-management">
+						Automated Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#reference-counting">
+						Reference Counting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#mark-and-sweep">
+						Mark and Sweep                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-in-java">
+							Garbage Collection in Java                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-in-java" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#fragmenting-and-compacting">
+						Fragmenting and Compacting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#generational-hypothesis">
+						Generational Hypothesis                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#memory-pools">
+						Memory Pools                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#eden">
+						Eden                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#survivor-spaces">
+						Survivor Spaces                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#oldtenured-space">
+						Old Generation                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#permgen">
+						PermGen                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#metaspace">
+						Metaspace                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">
+						Minor GC vs Major GC vs Full GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#major-gc-vs-full-gc">
+						Major GC vs Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms">
+							GC Algorithms: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#marking-reachable-objects">
+						Marking Reachable Objects                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#removing-unused-objects">
+						Removing Unused Objects                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#sweep">
+						Sweep                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#compact">
+						Compact                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#copy">
+						Copy                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations">
+							GC Algorithms: Implementations                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-gc">
+						Serial GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-gc">
+						Parallel GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-mark-and-sweep">
+						Concurrent Mark and Sweep                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#g1">
+						G1 – Garbage First                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-fully-young">
+						Evacuation Pause: Fully Young                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-marking">
+						Concurrent Marking                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-mixed">
+						Evacuation Pause: Mixed                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#summary">
+						Summary                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#shenandoah">
+						Shenandoah                    </a>
+							                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning">
+							GC Tuning: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput-vs-latency-vs-capacity">
+						Core Concepts                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#latency">
+						Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput">
+						Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#capacity">
+						Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#example">
+						Example                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-latency">
+						Tuning for Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-throughput">
+						Tuning for Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-capacity">
+						Tuning for Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-measuring">
+							GC Tuning: Tooling                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-measuring" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jmx-api">
+						JMX API                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jvisualvm">
+						JVisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jstat">
+						jstat                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gc-logs">
+						GC logs                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gcviewer">
+						GCViewer                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#profilers">
+						Profilers                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#hprof">
+						hprof                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#java-visualvm">
+						Java VisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#aprof">
+						AProf                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu active open">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-in-practice">
+							GC Tuning: In Practice                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-in-practice" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#high-allocation-rate">
+						High Allocation Rate                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-allocation-rate">
+						How to Measure Allocation Rate?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#premature-promotion">
+						Premature Promotion                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-promotion-rate">
+						How to Measure Promotion Rate                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-promotion">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-promotion">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-promotion">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-promotion">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#weak-soft-and-phantom-references">
+						Weak, Soft and Phantom References                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-references">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-references">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-references">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-references">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#other-examples">
+						Other Examples                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#rmi-gc">
+						RMI &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#jvmti-tagging-gc">
+						JVMTI tagging &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#humongous-allocations">
+						Humongous Allocations                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#conclusion">
+						Conclusion                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+			        </div>
+    </div>
+	
+        </div>
+        <div id="main">
+            <div class="article handbook">
+									
+<h1 class="highlight">GC Tuning: In Practice</h1>
+<p>Errors in applications could be caused by poor JVM performance, and other tricky causes. Use Plumbr to find root causes. </p>
+<p class="normal">This chapter covers several typical performance problems that one may encounter with garbage collection. The examples given here are derived from real applications, but are simplified for the sake of clarity.</p>
+
+					<h2 id="high-allocation-rate">High Allocation Rate</h2><p>Allocation rate is a term used when communicating the amount of memory allocated per time unit. Often it is expressed in MB/sec, but you can use PB/year if you feel like it. So that is all there is – no magic, just the amount of memory you allocate in your Java code measured over a period of time.</p>
+<p>An excessively high allocation rate can mean trouble for your application’s performance. When running on a JVM, the problem will be revealed by garbage collection posing a large overhead.</p>
+<h3 id="how-to-measure-allocation-rate">How to Measure Allocation Rate?</h3><p>One way to measure the allocation rate is to turn on GC logging by specifying <em>-XX:+PrintGCDetails -XX:+PrintGCTimeStamps </em>flags for the JVM. The JVM now starts logging the GC pauses similar to the following:</p>
+<pre>0.291: [GC (Allocation Failure) [PSYoungGen: 33280K-&gt;5088K(38400K)] 33280K-&gt;24360K(125952K), 0.0365286 secs] [Times: user=0.11 sys=0.02, real=0.04 secs] 
+0.446: [GC (Allocation Failure) [PSYoungGen: 38368K-&gt;5120K(71680K)] 57640K-&gt;46240K(159232K), 0.0456796 secs] [Times: user=0.15 sys=0.02, real=0.04 secs] 
+0.829: [GC (Allocation Failure) [PSYoungGen: 71680K-&gt;5120K(71680K)] 112800K-&gt;81912K(159232K), 0.0861795 secs] [Times: user=0.23 sys=0.03, real=0.09 secs]</pre>
+<p>From the GC log above, <strong>we can calculate the allocation rate as the difference between the sizes of the young generation after the completion of the last collection and before the start of the next one. </strong>Using the example above, we can extract the following information:</p>
+<ul>
+<li><em>A</em>t <strong>291 </strong>ms after the JVM was launched, <strong>33,280 K</strong> of objects were created. The first minor GC event cleaned the young generation, after which there were <strong>5,088 K</strong> of objects in the young generation left.</li>
+<li>At <strong>446 </strong>ms after launch, the young generation occupancy had grown to <strong>38,368 K</strong>, triggering the next GC, which managed to reduce the young generation occupancy to <strong>5,120 K</strong>.</li>
+<li>At <strong>829 </strong>ms after the launch, the size of the young generation was <strong>71,680 K</strong> and the GC reduced it again to <strong>5,120 K</strong>.</li>
+</ul>
+<p>This data can then be expressed in the following table calculating the allocation rate as deltas of the young occupancy:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><strong>Event</strong></th>
+<th><strong>Time</strong></th>
+<th><strong>Young before</strong></th>
+<th><strong>Young after</strong></th>
+<th><strong>Allocated during</strong></th>
+<th><strong>Allocation rate</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1st GC</td>
+<td>291ms</td>
+<td>33,280KB</td>
+<td>5,088KB</td>
+<td>33,280KB</td>
+<td><strong>114MB/sec</strong></td>
+</tr>
+<tr>
+<td>2nd GC</td>
+<td>446ms</td>
+<td>38,368KB</td>
+<td>5,120KB</td>
+<td>33,280KB</td>
+<td><strong>215MB/sec</strong></td>
+</tr>
+<tr>
+<td>3rd GC</td>
+<td>829ms</td>
+<td>71,680KB</td>
+<td>5,120KB</td>
+<td>66,560KB</td>
+<td><strong>174MB/sec</strong></td>
+</tr>
+<tr>
+<td>Total</td>
+<td>829ms</td>
+<td>N/A</td>
+<td>N/A</td>
+<td>133,120KB</td>
+<td><strong>161MB/sec</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Having this information allows us to say that this particular piece of software had the allocation rate of <strong>161 MB/sec</strong> during the period of measurement.</p>
+<h3 id="why-should-i-care">Why Should I Care?</h3><p>After measuring the allocation rate we can understand how the changes in allocation rate affect application throughput by increasing or reducing the frequency of GC pauses. First and foremost, you should notice that only <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">minor GC</a> pauses cleaning the young generation are affected. Neither the frequency nor duration of the GC pauses cleaning the old generation are directly impacted by the <strong>allocation rate</strong>, but instead by the <strong>promotion rate</strong>, a term that we will cover separately in the next section.</p>
+<p>Knowing that we can focus only on <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">Minor GC</a> pauses, we should next look into the different memory pools inside the young generation. As the allocation takes place in <a href="https://plumbr.io/handbook/garbage-collection-in-java#eden">Eden</a>, we can immediately look into how sizing Eden can impact the allocation rate. So we can hypothesize that increasing the size of Eden will reduce the frequency of minor GC pauses and thus allow the application to sustain faster allocation rates.</p>
+<p>And indeed, when running the same application with different Eden sizes using <em>-XX:NewSize -XX:MaxNewSize &amp; -XX:SurvivorRatio</em> parameters, we can see a two-fold difference in allocation rates.</p>
+<ul>
+<li>Re-running with 100 M of Eden reduces the allocation rate to below 100 MB/sec.</li>
+<li>Increasing Eden size to 1 GB increases the allocation rate to just below 200 MB/sec.</li>
+</ul>
+<p>If you are still wondering how this can be true – <strong>if you stop your application threads for GC less frequently you can do more useful work. More useful work also happens to create more objects, thus supporting the increased allocation rate</strong>.</p>
+<p>Now, before you jump to the conclusion that “bigger Eden is better”, you should notice that the allocation rate might and probably does not directly correlate with the actual throughput of your application. It is a technical measurement contributing to throughput. The allocation rate can and will have an impact on how frequently your minor GC pauses stop application threads, but to see the overall impact, you also need to take into account major GC pauses and measure throughput not in MB/sec but in the business operations your application provides.</p>
+<h3 id="give-me-an-example">Give me an Example</h3><p>Meet the <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/Boxing.java">demo application</a>. Suppose that it works with an external sensor that provides a number. The application continuously updates the value of the sensor in a dedicated thread (to a random value, in this example), and from other threads sometimes uses the most recent value to do something meaningful with it in the <em>processSensorValue()</em> method:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-java"><span class="kwd">public</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> </span><span class="typ">BoxingFailure</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">volatile</span><span class="pln"> </span><span class="typ">Double</span><span class="pln"> sensorValue</span><span class="pun">;</span><span class="pln">
+
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> readSensor</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="kwd">while</span><span class="pun">(</span><span class="kwd">true</span><span class="pun">)</span><span class="pln"> sensorValue </span><span class="pun">=</span><span class="pln"> </span><span class="typ">Math</span><span class="pun">.</span><span class="pln">random</span><span class="pun">();</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> processSensorValue</span><span class="pun">(</span><span class="typ">Double</span><span class="pln"> value</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="kwd">if</span><span class="pun">(</span><span class="pln">value </span><span class="pun">!=</span><span class="pln"> </span><span class="kwd">null</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+      </span><span class="com">//...</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+<p>As the name of the class suggests, the problem here is boxing. Possibly to accommodate the null check, the author made the <em>sensorValue</em> field a capital-D Double. This example is quite a common pattern of dealing with calculations based on the most recent value, when obtaining this value is an expensive operation. And in the real world, it is usually much more expensive than just getting a random value. Thus, one thread continuously generates new values, and the calculating thread uses them, avoiding the expensive retrieval.</p>
+<p>The demo application is impacted by the GC not keeping up with the allocation rate. The ways to verify and solve the issue are given in the next sections.</p>
+<h3 id="could-my-jvms-be-affected">Could my JVMs be Affected?</h3><p>First and foremost, you should only be worried if the throughput of your application starts to decrease. As the application is creating too much objects that are almost immediately discarded, the frequency of minor GC pauses surges. Under enough of a load this can result in GC having a significant impact on throughput.</p>
+<p>When you run into a situation like this, you would be facing a log file similar to the following short snippet extracted from the GC logs of the <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/Boxing.java">demo application</a> introduced in the previous section. The application was launched as with the <strong>-XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xmx32m </strong>command line arguments:</p>
+<pre>2.808: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003076 secs]
+2.819: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003079 secs]
+2.830: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0002968 secs]
+2.842: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003374 secs]
+2.853: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0004672 secs]
+2.864: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003371 secs]
+2.875: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003214 secs]
+2.886: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003374 secs]
+2.896: [GC (Allocation Failure) [PSYoungGen: 9760K-&gt;32K(10240K)], 0.0003588 secs]</pre>
+<p>What should immediately grab your attention is the <strong>frequency of</strong> <strong>minor GC events</strong>. This indicates that there are lots and lots of objects being allocated. Additionally, the <strong>post-GC occupancy of the young generation remains low, and no full collections are happening</strong>. These symptoms indicate that the GC is having significant impact to the throughput of the application at hand.</p>
+<h3 id="what-is-the-solution">What is the Solution?</h3><p>In some cases, reducing the impact of high allocation rates can be as easy as increasing the size of the young generation. Doing so will not reduce the allocation rate itself, but will result in less frequent collections. The benefit of the approach kicks in when there will be only a few survivors every time. As the duration of a minor GC pause is impacted by the number of <strong>surviving</strong> objects, they will not noticeably increase here.</p>
+<p>The result is visible when we run the very same <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/Boxing.java">demo application</a> with increased heap size and, with it, the young generation size, by using the <strong>-Xmx64m</strong> parameter:</p>
+<pre>2.808: [GC (Allocation Failure) [PSYoungGen: 20512K-&gt;32K(20992K)], 0.0003748 secs]
+2.831: [GC (Allocation Failure) [PSYoungGen: 20512K-&gt;32K(20992K)], 0.0004538 secs]
+2.855: [GC (Allocation Failure) [PSYoungGen: 20512K-&gt;32K(20992K)], 0.0003355 secs]
+2.879: [GC (Allocation Failure) [PSYoungGen: 20512K-&gt;32K(20992K)], 0.0005592 secs]</pre>
+<p>However, just throwing more memory at it is not always a viable solution. Equipped with the knowledge on allocation profilers from the previous chapter, we may find out where most of the garbage is produced. Specifically, in this case, 99% are <strong>Doubles</strong> that are created with the <strong>readSensor</strong> method. As a simple optimization, the object can be replaced with a primitive double, and the null can be replaced with <a href="https://docs.oracle.com/javase/7/docs/api/java/lang/Double.html#NaN">Double.NaN</a>. Since primitive values are not actually objects, no garbage is produced, and there is nothing to collect. Instead of allocating a new object on the heap, a field in an existing object is directly overwritten.</p>
+<p>The <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/FixedBoxing.java">simple change</a> (<a href="https://gist.github.com/gvsmirnov/0270f0f15f9498e3b655" target="_blank">diff</a>) will, in the demo application, almost completely remove GC pauses. In some cases, the JVM may be clever enough to remove excessive allocations itself by using the escape analysis technique. To cut a long story short, the JIT compiler may in some cases prove that a created object never “escapes” the scope it is created in. In such cases, there is no actual need to allocate it on the heap and produce garbage this way, so the JIT compiler does just that: it eliminates the allocation. See <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/jit/EscapeAnalysis.java">this benchmark</a> for an example.</p>
+<h2 id="premature-promotion">Premature Promotion</h2><p>Before explaining the concept of premature promotion, we should familiarize ourselves with the concept it builds upon – the promotion rate. The promotion rate is measured in the amount of data propagated from the young generation to the old generation per time unit. It is often measured in MB/sec, similarly to the allocation rate.</p>
+<p>Promoting long-lived objects from the young generation to the old is how JVM is expected to behave. Recalling the generation hypothesis we can now construct a situation where not only long-lived objects end up in the old generation. Such a situation, where objects with a short life expectancy are not collected in the young generation and get promoted to the old generation, is called <strong>premature promotion.</strong></p>
+<p>Cleaning these short-lived objects now becomes a job for major GC, which is not designed for frequent runs and results in longer GC pauses. This significantly affects the throughput of the application.</p>
+<h3 id="how-to-measure-promotion-rate">How to Measure Promotion Rate</h3><p>One of the ways you can measure the promotion rate is to turn on GC logging by specifying <em>-XX:+PrintGCDetails</em> <em>-XX:+PrintGCTimeStamps</em> flags for the JVM. The JVM now starts logging the GC pauses just like in the following snippet:</p>
+<pre>0.291: [GC (Allocation Failure) [PSYoungGen: 33280K-&gt;5088K(38400K)] 33280K-&gt;24360K(125952K), 0.0365286 secs] [Times: user=0.11 sys=0.02, real=0.04 secs] 
+0.446: [GC (Allocation Failure) [PSYoungGen: 38368K-&gt;5120K(71680K)] 57640K-&gt;46240K(159232K), 0.0456796 secs] [Times: user=0.15 sys=0.02, real=0.04 secs] 
+0.829: [GC (Allocation Failure) [PSYoungGen: 71680K-&gt;5120K(71680K)] 112800K-&gt;81912K(159232K), 0.0861795 secs] [Times: user=0.23 sys=0.03, real=0.09 secs]</pre>
+<p>From the above we can extract the size of the young Generation and the total heap both before and after the collection event. Knowing the consumption of the young generation and the total heap, it is easy to calculate the consumption of the old generation as just the delta between the two. Expressing the information in GC logs as:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><strong>Event</strong></th>
+<th><strong>Time</strong></th>
+<th><strong>Young decreased</strong></th>
+<th><strong>Total decreased</strong></th>
+<th><strong>Promoted</strong></th>
+<th><strong>Promotion rate</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1st GC</td>
+<td>291ms</td>
+<td>28,192K</td>
+<td>8,920K</td>
+<td>19,272K</td>
+<td><strong>66.2 MB/sec</strong></td>
+</tr>
+<tr>
+<td>2nd GC</td>
+<td>446ms</td>
+<td>33,248K</td>
+<td>11,400K</td>
+<td>21,848K</td>
+<td><strong>140.95 MB/sec</strong></td>
+</tr>
+<tr>
+<td>3rd GC</td>
+<td>829ms</td>
+<td>66,560K</td>
+<td>30,888K</td>
+<td>35,672K</td>
+<td><strong>93.14 MB/sec</strong></td>
+</tr>
+<tr>
+<td>Total</td>
+<td>829ms</td>
+<td></td>
+<td></td>
+<td>76,792K</td>
+<td><strong>92.63 MB/sec</strong></td>
+</tr>
+</tbody>
+</table>
+<p>will allow us to extract the promotion rate for the measured period. We can see that on average the promotion rate was 92 MB/sec, peaking at 140.95 MB/sec for a while.</p>
+<p>Notice that you can extract this information only from minor GC pauses. Full GC pauses do not expose the promotion rate as the change in the old generation usage in GC logs also includes objects cleaned by the major GC.</p>
+<h3 id="why-should-i-care-promotion">Why Should I Care?</h3><p>Similarly to the allocation rate, the main impact of the promotion rate is the change of frequency in GC pauses. But as opposed to the allocation rate that affects the frequency of <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">minor GC</a> events, the promotion rate affects the frequency of <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">major GC</a> events. Let me explain – the more stuff you promote to the old generation the faster you will fill it up. Filling the old generation faster means that the frequency of the GC events cleaning the old generation will increase.</p>
+<p><a href="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/how-java-garbage-collection-works.png"><img class="aligncenter size-full wp-image-4915" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/how-java-garbage-collection-works.png" alt="Copying collector in survivor space java" width="580" height="184" srcset="https://plumbr.io/app/uploads/2015/05/how-java-garbage-collection-works.png 580w, https://plumbr.io/app/uploads/2015/05/how-java-garbage-collection-works-300x95.png 300w" sizes="(max-width: 580px) 100vw, 580px"></a></p>
+<p>As we have shown in earlier chapters, full garbage collections typically require much more time, as they have to interact with many more objects, and perform additional complex activities such as defragmentation.</p>
+<h3 id="give-me-an-example-promotion">Give me an Example</h3><p>Let us look at a <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/PrematurePromotion.java"><span style="color: #1155cc;">demo application</span></a> suffering from premature promotion. This app obtains chunks of data, accumulates them, and, when a sufficient number is reached, processes the whole batch at once:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-java"><span class="kwd">public</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> </span><span class="typ">PrematurePromotion</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+
+   </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">final</span><span class="pln"> </span><span class="typ">Collection</span><span class="pun">&lt;</span><span class="kwd">byte</span><span class="pun">[]&gt;</span><span class="pln"> accumulatedChunks </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> </span><span class="typ">ArrayList</span><span class="pun">&lt;&gt;();</span><span class="pln">
+
+   </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> onNewChunk</span><span class="pun">(</span><span class="kwd">byte</span><span class="pun">[]</span><span class="pln"> bytes</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+       accumulatedChunks</span><span class="pun">.</span><span class="pln">add</span><span class="pun">(</span><span class="pln">bytes</span><span class="pun">);</span><span class="pln">
+
+       </span><span class="kwd">if</span><span class="pun">(</span><span class="pln">accumulatedChunks</span><span class="pun">.</span><span class="pln">size</span><span class="pun">()</span><span class="pln"> </span><span class="pun">&gt;</span><span class="pln"> MAX_CHUNKS</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+           processBatch</span><span class="pun">(</span><span class="pln">accumulatedChunks</span><span class="pun">);</span><span class="pln">
+           accumulatedChunks</span><span class="pun">.</span><span class="pln">clear</span><span class="pun">();</span><span class="pln">
+       </span><span class="pun">}</span><span class="pln">
+   </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+<p>The <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/PrematurePromotion.java"><span style="color: #1155cc;">demo application</span></a> is impacted by premature promotion by the GC. The ways to verify and solve the issue are given in the next sections.</p>
+<h3 id="could-my-jvms-be-affected-promotion">Could my JVMs be Affected?</h3><p>In general, the symptoms of premature promotion can take any of the following forms:</p>
+<ul>
+<li>The application goes through frequent full GC runs over a short period of time.</li>
+<li>The old generation consumption after each full GC is low, often under 10-20% of the total size of the old generation.</li>
+<li>Facing the promotion rate approaching the allocation rate.</li>
+</ul>
+<p>Showcasing this in a short and easy-to-understand <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/PrematurePromotion.java">demo application</a> is a bit tricky, so we will cheat a little by making the objects tenure to the old generation a bit earlier than it happens by default. If we ran the demo with a specific set of GC parameters (<em>-Xmx24m -XX:NewSize=16m -XX:MaxTenuringThreshold=1</em>), we would see this in the garbage collection logs:</p>
+<pre>2.176: [Full GC (Ergonomics) [PSYoungGen: 9216K-&gt;0K(10752K)] [ParOldGen: 10020K-&gt;9042K(12288K)] 19236K-&gt;9042K(23040K), 0.0036840 secs]
+2.394: [Full GC (Ergonomics) [PSYoungGen: 9216K-&gt;0K(10752K)] [ParOldGen: 9042K-&gt;8064K(12288K)] 18258K-&gt;8064K(23040K), 0.0032855 secs]
+2.611: [Full GC (Ergonomics) [PSYoungGen: 9216K-&gt;0K(10752K)] [ParOldGen: 8064K-&gt;7085K(12288K)] 17280K-&gt;7085K(23040K), 0.0031675 secs]
+2.817: [Full GC (Ergonomics) [PSYoungGen: 9216K-&gt;0K(10752K)] [ParOldGen: 7085K-&gt;6107K(12288K)] 16301K-&gt;6107K(23040K), 0.0030652 secs]</pre>
+<p>At first glance it may seem that premature promotion is not the issue here. Indeed, the occupancy of the old generation seems to be decreasing on each cycle. However, if few or no objects were promoted, we would not be seeing a lot of full garbage collections.</p>
+<p>There is a simple explanation for this GC behavior: while many objects are being promoted to the old generation, some existing objects are collected. This gives the impression that the old generation usage is decreasing, while in fact, there are objects that are constantly being promoted, triggering full GC.</p>
+<h3 id="what-is-the-solution-promotion">What is the Solution?</h3><p>In a nutshell, to fix this problem, we would need to make the buffered data fit into the young generation. There are two simple approaches for doing this. The first is to increase the young generation size by using <em>-Xmx64m -XX:NewSize=32m</em> parameters at JVM startup. Running the application with this change in configuration will make Full GC events much less frequent, while barely affecting the duration of minor collections:</p>
+<pre>2.251: [GC (Allocation Failure) [PSYoungGen: 28672K-&gt;3872K(28672K)] 37126K-&gt;12358K(61440K), 0.0008543 secs]
+2.776: [GC (Allocation Failure) [PSYoungGen: 28448K-&gt;4096K(28672K)] 36934K-&gt;16974K(61440K), 0.0033022 secs]</pre>
+<p>Another approach in this case would be to simply decrease the batch size, which would also give a similar result. Picking the right solution heavily depends on what is really happening in the application. In some cases, business logic does not permit decreasing batch size. In this case, increasing available memory or redistributing in favor of the young generation might be possible.</p>
+<p>If neither is a viable option, then perhaps data structures can be optimized to consume less memory. But the general goal in this case remains the same: make transient data fit into the young generation.</p>
+<h2 id="weak-soft-and-phantom-references">Weak, Soft and Phantom References</h2><p>Another class of issues affecting GC is linked to the use of non-strong references in the application. While this may help to avoid an unwanted <a href="https://plumbr.io/outofmemory">OutOfMemoryError</a> in many cases, heavy usage of such references may significantly impact the way garbage collection affects the performance of your application.</p>
+<h3 id="why-should-i-care-references">Why Should I Care?</h3><p>When using <strong>weak references</strong>, you should be aware of the way the weak references are garbage-collected. Whenever GC discovers that an object is weakly reachable, that is, the last remaining reference to the object is a weak reference, it is put onto the corresponding <strong>ReferenceQueue</strong>, and becomes eligible for finalization. One may then poll this reference queue and perform the associated cleanup activities. A typical example for such cleanup would be the removal of the now missing key from the cache.</p>
+<p>The trick here is that at this point you can still create new strong references to the object, so before it can be, at last, finalized and reclaimed, GC has to check again that it really is okay to do this. Thus, the weakly referenced objects are not reclaimed for an extra GC cycle.</p>
+<p>Weak references are actually a lot more common than you might think. Many caching solutions build the implementations using weak referencing, so even if you are not directly creating any in your code, there is a strong chance your application is still using weakly referenced objects in large quantities.</p>
+<p>When using <strong>soft references</strong>, you should bear in mind that soft references are collected much less eagerly than the weak ones. The exact point at which it happens is not specified and depends on the implementation of the JVM. Typically the collection of soft references happens only as a last ditch effort before running out of memory. What it implies is that you might find yourself in situations where you face either more frequent or longer full GC pauses than expected, since there are more objects resting in the old generation.</p>
+<p>When using <strong>phantom references</strong>, you have to literally do manual memory management in regards of flagging such references eligible for garbage collection. It is dangerous, as a superficial glance at the <em>javadoc</em> may lead one to believe they are the completely safe to use:</p>
+<p><em>In order to ensure that a reclaimable object remains so, the referent of&nbsp;</em><em>a phantom reference may not be retrieved: The </em><em>get</em><em> method of a&nbsp;</em><em>phantom reference always returns </em><em>null</em><em>.</em></p>
+<p>Surprisingly, many developers skip the very next paragraph in the same <em>javadoc</em> (emphasis added):</p>
+<p><em>Unlike soft and weak references, <strong>phantom references are not&nbsp;</strong></em><strong><em>automatically cleared</em></strong><em> by the garbage collector as they are enqueued. An&nbsp;</em><em>object that is reachable via phantom references will remain so until all&nbsp;</em><em>such references are cleared or themselves become unreachable.</em></p>
+<p>That is right, we have to manually <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/ref/Reference.html#clear()"><em>clear()</em></a> up phantom references or risk facing a situation where the JVM starts dying with an <a href="https://plumbr.io/outofmemory">OutOfMemoryError</a>. The reason why the Phantom references are there in the first place is that this is the only way to find out when an object has actually become unreachable via the usual means. Unlike with soft or weak references, you cannot resurrect a phantom-reachable object.</p>
+<p>&nbsp;</p>
+<h3 id="give-me-an-example-references">Give me an Example</h3><p>Let us take a look at another <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/WeakReferences.java">demo application</a> that allocates a lot of objects, which are successfully reclaimed during minor garbage collections. Bearing in mind the trick of altering the tenuring threshold from the previous section on promotion rate, we could run this application with <strong>-Xmx24m -XX:NewSize=16m -XX:MaxTenuringThreshold=1</strong> and see this in GC logs:</p>
+<pre>2.330: [GC (Allocation Failure)  20933K-&gt;8229K(22528K), 0.0033848 secs]
+2.335: [GC (Allocation Failure)  20517K-&gt;7813K(22528K), 0.0022426 secs]
+2.339: [GC (Allocation Failure)  20101K-&gt;7429K(22528K), 0.0010920 secs]
+2.341: [GC (Allocation Failure)  19717K-&gt;9157K(22528K), 0.0056285 secs]
+2.348: [GC (Allocation Failure)  21445K-&gt;8997K(22528K), 0.0041313 secs]
+2.354: [GC (Allocation Failure)  21285K-&gt;8581K(22528K), 0.0033737 secs]
+2.359: [GC (Allocation Failure)  20869K-&gt;8197K(22528K), 0.0023407 secs]
+2.362: [GC (Allocation Failure)  20485K-&gt;7845K(22528K), 0.0011553 secs]
+2.365: [GC (Allocation Failure)  20133K-&gt;9501K(22528K), 0.0060705 secs]
+2.371: [Full GC (Ergonomics)  9501K-&gt;2987K(22528K), 0.0171452 secs]</pre>
+<p>Full collections are quite rare in this case. However, if the application also starts creating weak references (<strong>-Dweak.refs=true</strong>) to these created objects, the situation may change drastically. There may be many reasons to do this, starting from using the object as keys in a weak hash map and ending with allocation profiling. In any case, making use of weak references here may lead to this:</p>
+<pre>2.059: [Full GC (Ergonomics)  20365K-&gt;19611K(22528K), 0.0654090 secs]
+2.125: [Full GC (Ergonomics)  20365K-&gt;19711K(22528K), 0.0707499 secs]
+2.196: [Full GC (Ergonomics)  20365K-&gt;19798K(22528K), 0.0717052 secs]
+2.268: [Full GC (Ergonomics)  20365K-&gt;19873K(22528K), 0.0686290 secs]
+2.337: [Full GC (Ergonomics)  20365K-&gt;19939K(22528K), 0.0702009 secs]
+2.407: [Full GC (Ergonomics)  20365K-&gt;19995K(22528K), 0.0694095 secs]</pre>
+<p>As we can see, there are now many full collections, and the duration of the collections is an order of magnitude longer! Another case of premature promotion, but this time a tad trickier. The root cause, of course, lies with the weak references. Before we added them, the objects created by the application were dying just before being promoted to the old generation. But with the addition, they are now sticking around for an extra GC round so that the appropriate cleanup can be done on them. Like before, a simple solution would be to increase the size of the young generation by specifying <strong>-Xmx64m -XX:NewSize=32m</strong>:</p>
+<pre>2.328: [GC (Allocation Failure)  38940K-&gt;13596K(61440K), 0.0012818 secs]
+2.332: [GC (Allocation Failure)  38172K-&gt;14812K(61440K), 0.0060333 secs]
+2.341: [GC (Allocation Failure)  39388K-&gt;13948K(61440K), 0.0029427 secs]
+2.347: [GC (Allocation Failure)  38524K-&gt;15228K(61440K), 0.0101199 secs]
+2.361: [GC (Allocation Failure)  39804K-&gt;14428K(61440K), 0.0040940 secs]
+2.368: [GC (Allocation Failure)  39004K-&gt;13532K(61440K), 0.0012451 secs]</pre>
+<p>The objects are now once again reclaimed during minor garbage collection.</p>
+<p>The situation is even worse when <strong>soft references</strong> are used as seen in the <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/SoftReferences.java">next demo application</a>. The softly-reachable objects are not reclaimed until the application risks getting an OutOfMemoryError. Replacing weak references with soft references in the demo application immediately surfaces many more Full GC events:</p>
+<pre>2.162: [Full GC (Ergonomics)  31561K-&gt;12865K(61440K), 0.0181392 secs]
+2.184: [GC (Allocation Failure)  37441K-&gt;17585K(61440K), 0.0024479 secs]
+2.189: [GC (Allocation Failure)  42161K-&gt;27033K(61440K), 0.0061485 secs]
+2.195: [Full GC (Ergonomics)  27033K-&gt;14385K(61440K), 0.0228773 secs]
+2.221: [GC (Allocation Failure)  38961K-&gt;20633K(61440K), 0.0030729 secs]
+2.227: [GC (Allocation Failure)  45209K-&gt;31609K(61440K), 0.0069772 secs]
+2.234: [Full GC (Ergonomics)  31609K-&gt;15905K(61440K), 0.0257689 secs]</pre>
+<p>And the king here is the <strong>phantom reference </strong>as seen in the <a href="https://github.com/gvsmirnov/java-perv/blob/master/labs-8/src/main/java/ru/gvsmirnov/perv/labs/gc/PhantomReferences.java">third demo application</a>. Running the demo with the same sets of parameters as before would give us results that are pretty similar as the results in the case with weak references. The number of full GC pauses would, in fact, be much smaller because of the difference in the finalization described in the beginning of this section.</p>
+<p>However, adding one flag that disables phantom reference clearing (<strong>-Dno.ref.clearing=true</strong>) would quickly give us this:</p>
+<pre>4.180: [Full GC (Ergonomics)  57343K-&gt;57087K(61440K), 0.0879851 secs]
+4.269: [Full GC (Ergonomics)  57089K-&gt;57088K(61440K), 0.0973912 secs]
+4.366: [Full GC (Ergonomics)  57091K-&gt;57089K(61440K), 0.0948099 secs]
+Exception in thread "main" java.lang.OutOfMemoryError: Java heap space</pre>
+<p>One must exercise extreme caution when using phantom references and always clear up the phantom reachable objects in a timely manner. Failing to do so will likely end up with an OutOfMemoryError. And trust us when we say that it is quite easy to fail at this: one unexpected exception in the thread that processes the reference queue, and you will have a dead application at your hand.</p>
+<h3 id="could-my-jvms-be-affected-references">Could my JVMs be Affected?</h3><p>As a general recommendation, consider enabling the <em>-XX:+PrintReferenceGC</em> JVM option to see the impact that different references have on garbage collection. If we add this to the application from the WeakReference example, we will see this:</p>
+<pre>2.173: [Full GC (Ergonomics) 2.234: [SoftReference, 0 refs, 0.0000151 secs]2.234: [WeakReference, 2648 refs, 0.0001714 secs]2.234: [FinalReference, 1 refs, 0.0000037 secs]2.234: [PhantomReference, 0 refs, 0 refs, 0.0000039 secs]2.234: [JNI Weak Reference, 0.0000027 secs][PSYoungGen: 9216K-&gt;8676K(10752K)] [ParOldGen: 12115K-&gt;12115K(12288K)] 21331K-&gt;20792K(23040K), [Metaspace: 3725K-&gt;3725K(1056768K)], 0.0766685 secs] [Times: user=0.49 sys=0.01, real=0.08 secs] 
+2.250: [Full GC (Ergonomics) 2.307: [SoftReference, 0 refs, 0.0000173 secs]2.307: [WeakReference, 2298 refs, 0.0001535 secs]2.307: [FinalReference, 3 refs, 0.0000043 secs]2.307: [PhantomReference, 0 refs, 0 refs, 0.0000042 secs]2.307: [JNI Weak Reference, 0.0000029 secs][PSYoungGen: 9215K-&gt;8747K(10752K)] [ParOldGen: 12115K-&gt;12115K(12288K)] 21331K-&gt;20863K(23040K), [Metaspace: 3725K-&gt;3725K(1056768K)], 0.0734832 secs] [Times: user=0.52 sys=0.01, real=0.07 secs] 
+2.323: [Full GC (Ergonomics) 2.383: [SoftReference, 0 refs, 0.0000161 secs]2.383: [WeakReference, 1981 refs, 0.0001292 secs]2.383: [FinalReference, 16 refs, 0.0000049 secs]2.383: [PhantomReference, 0 refs, 0 refs, 0.0000040 secs]2.383: [JNI Weak Reference, 0.0000027 secs][PSYoungGen: 9216K-&gt;8809K(10752K)] [ParOldGen: 12115K-&gt;12115K(12288K)] 21331K-&gt;20925K(23040K), [Metaspace: 3725K-&gt;3725K(1056768K)], 0.0738414 secs] [Times: user=0.52 sys=0.01, real=0.08 secs]</pre>
+<p>As always, this information should only be analyzed when you have identified that GC is having impact to either the throughput or latency of your application. In such case you may want to check these sections of the logs. Normally, the number of references cleared during each GC cycle is quite low, in many cases exactly zero. If this is not the case, however, and the application is spending a significant period of time clearing references, or just a lot of them are being cleared, then further investigation is required.</p>
+<h3 id="what-is-the-solution-references">What is the Solution?</h3><p>When you have verified the application actually is suffering from the mis-, ab- or overuse of either weak, soft or phantom references, the solution often involves changing the application’s intrinsic logic. This is very application specific and generic guidelines are thus hard to offer. However, some generic solutions to bear in mind are:</p>
+<ul>
+<li>Weak references – if the problem is triggered by increased consumption of a specific memory pool, an increase in the corresponding pool (and possibly the total heap along with it) can help you out. As seen in the example section, increasing the total heap and young generation sizes alleviated the pain.</li>
+<li>Phantom references – make sure you are actually clearing the references. It is easy to dismiss certain corner cases and have the clearing thread to not being able to keep up with the pace the queue is filled or to stop clearing the queue altogether, putting a lot of pressure to GC and creating a risk of ending up with an <a href="https://plumbr.io/outofmemory">OutOfMemoryError</a>.</li>
+<li>Soft references – when soft references are identified as the source of the problem, the only real way to alleviate the pressure is to change the application’s intrinsic logic.</li>
+</ul>
+<h2 id="other-examples">Other Examples</h2><p class="normal">Previous chapters covered the most common problems related to poorly behaving GC. Unfortunately, there is a long list of more specific cases, where you cannot apply the knowledge from previous chapters. This section describes a few of the more unusual problems that you may face.</p>
+<h3 id="rmi-gc">RMI &amp; GC</h3><p>When your application is publishing or consuming services over <a href="http://www.oracle.com/technetwork/articles/javaee/index-jsp-136424.html">RMI</a>, the JVM periodically launches full GC to make sure that locally unused objects are also not taking up space on the other end. Bear in mind that even if you are not explicitly publishing anything over RMI in your code, third party libraries or utilities can still open RMI endpoints. One such common culprit is for example <a href="http://www.oracle.com/technetwork/articles/java/javamanagement-140525.html">JMX</a>, which, if attached to remotely, will use RMI underneath to publish the data.</p>
+<p>The problem is exposed by seemingly unnecessary and periodic full GC pauses. When you check the old generation consumption, there is often no pressure to the memory as there is plenty of free space in the old generation, but full GC is triggered, stopping the application threads.</p>
+<p>This behavior of removing remote references via <a href="http://docs.oracle.com/javase/7/docs/api/java/lang/System.html#gc()"><em>System.gc()</em></a> is triggered by the <em>sun.rmi.transport.ObjectTable</em> class requesting garbage collection to be run periodically as specified in the <em>sun.misc.GC.requestLatency()</em> method.</p>
+<p>For many applications, this is not necessary or outright harmful. To disable such periodic GC runs, you can set up the following for your JVM startup scripts:</p>
+<pre>java -Dsun.rmi.dgc.server.gcInterval=9223372036854775807L -Dsun.rmi.dgc.client.gcInterval=9223372036854775807L com.yourcompany.YourApplication</pre>
+<p>This sets the period after which <em>System.gc()</em> is run to <em>Long.MAX_VALUE</em>; for all practical matters, this equals eternity.</p>
+<p>An alternative solution for the problem would to disable explicit calls to <em>System.gc()</em> by specifying <em>-XX:+DisableExplicitGC </em>in the JVM startup parameters. We do not however recommend this solution as it can have other side effects.</p>
+<h3 id="jvmti-tagging-gc">JVMTI tagging &amp; GC</h3><p>Whenever the application is run alongside with a Java Agent <em>(-javaagent)</em>, there is a chance that the agent can tag the objects in the heap using <a href="http://docs.oracle.com/javase/7/docs/platform/jvmti/jvmti.html#Heap">JVMTI tagging</a>. Agents can use tagging for various reasons that are not in the scope of this handbook, but there is a GC-related performance issue that can start affecting the latency and throughput of your application if tagging is applied to a large subset of objects inside the heap.</p>
+<p>The problem is hidden in the native code where <em>JvmtiTagMap::do_weak_oops</em> iterates over all the tags during each garbage collection event and performs a number of not-so-cheap operations for all of them. To make things worse, this operation is performed sequentially and is not parallelized.</p>
+<p>With a large number of tags, this implies that a large part of the GC process is now carried out in a single thread and all the benefits of parallelism disappear, potentially increasing the duration of GC pauses by an order of magnitude.</p>
+<p>To check whether or not a particular agent can be the reason for extended GC pauses, you would need to turn on the diagnostic option of <em>–XX:+TraceJVMTIObjectTagging</em>. Enabling the trace will allow you to get an estimate of how much native memory the tag map consumes and how much time the heap walks take.</p>
+<p>If you are not the author of the agent yourself, fixing the problem is often out of your reach. Apart from contacting the vendor of a particular agent you cannot do much. In case you do end up in a situation like this, recommend that the vendor clean up the tags that are no longer needed.</p>
+<h3 id="humongous-allocations">Humongous Allocations</h3><p>Whenever your application is using the G1 garbage collection algorithm, a phenomenon called humongous allocations can impact your application performance in regards of GC. To recap, humongous allocations are allocations that are larger than 50% of the region size in G1.</p>
+<p>Having frequent humongous allocations can trigger GC performance issues, considering the way that G1 handles such allocations:</p>
+<ul>
+<li>If the regions contain humongous objects, space between the last humongous object in the region and the end of the region will be unused. If all the humongous objects are just a bit larger than a factor of the region size, this unused space can cause the heap to become fragmented.</li>
+<li>Collection of the humongous objects is not as optimized by the G1 as with regular objects. It was especially troublesome with early Java 8 releases – <a href="https://bugs.openjdk.java.net/browse/JDK-8027959">until Java 1.8u40</a> the reclamation of humongous regions was only done during full GC events. More recent releases of the Hotspot JVM free the humongous regions at the end of the marking cycle during the cleanup phase, so the impact of the issue has been reduced significantly for newer JVMs.</li>
+</ul>
+<p>To check whether or not your application is allocating objects in humongous regions, the first step would be to turn on GC logs similar to the following:</p>
+<pre>java -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -XX:+PrintReferenceGC -XX:+UseG1GC -XX:+PrintAdaptiveSizePolicy -Xmx128m MyClass</pre>
+<p>Now, when you check the logs and discover sections like these:</p>
+<pre> 0.106: [G1Ergonomics (Concurrent Cycles) request concurrent cycle initiation, reason: occupancy higher than threshold, occupancy: 60817408 bytes, allocation request: 1048592 bytes, threshold: 60397965 bytes (45.00 %), source: concurrent humongous allocation]
+ 0.106: [G1Ergonomics (Concurrent Cycles) request concurrent cycle initiation, reason: requested by GC cause, GC cause: G1 Humongous Allocation]
+ 0.106: [G1Ergonomics (Concurrent Cycles) initiate concurrent cycle, reason: concurrent cycle initiation requested]
+ 0.106: [GC pause (G1 Humongous Allocation) (young) (initial-mark) 0.106: [G1Ergonomics (CSet Construction) start choosing CSet, _pending_cards: 0, predicted base time: 10.00 ms, remaining time: 190.00 ms, target pause time: 200.00 ms]</pre>
+<p>you have evidence that the application is indeed allocating humongous objects. The evidence is visible in the cause for a GC pause being identified as G1 Humongous Allocation and in the <em>“allocation request: 1048592 bytes”</em> section, where we can see that the application is trying to allocate an object with the size of 1,048,592 bytes, which is 16 bytes larger than the 50% of the 2 MB size of the humongous region specified for the JVM.</p>
+<p>The first solution for humongous allocation is to change the region size so that (most) of the allocations would not exceed the 50% limit triggering allocations in the humongous regions. The region size is calculated by the JVM during startup based on the size of the heap. You can override the size by specifying <em>-XX:G1HeapRegionSize=XX</em> in the startup script. The specified region size must be between 1 and 32 megabytes and has to be a power of two.</p>
+<p>This solution can have side effects – increasing the region size reduces the number of regions available so you need to be careful and run extra set of tests to see whether or not you actually improved the throughput or latency of the application.</p>
+<p>A more time-consuming but potentially better solution would be to understand whether or not the application can limit the size of allocations. The best tools for the job in this case are profilers. They can give you information about humongous objects by showing their allocation sources with stack traces.</p>
+<h3 id="conclusion">Conclusion</h3><p>With the enormous number of possible applications that one may run on the JVM, coupled with the hundreds of JVM configuration parameters that one may tweak for GC, there are astoundingly many ways in which the GC may impact your application’s performance.</p>
+<p>Therefore, there is no real silver bullet approach to tuning the JVM to match the performance goals you have to fulfill. What we have tried to do here is walk you through some common (and not so common) examples to give you a general idea of how problems like these can be approached. Coupled with the tooling overview and with a solid understanding of how the GC works, you have all the chances of successfully tuning garbage collection to boost the performance of your application.</p>
+
+				            </div>
+        </div>
+    </div>
+</div>
+
+	<div id="footer">
+		<div class="wrap">
+			<div id="menu-footer" class="row clear fat-footer"><div class="col-2"><ul><li class="title"><strong>Products &amp; Services</strong></li><li><a href="https://plumbr.io/application-monitoring">Application Monitoring</a></li><li><a href="https://plumbr.io/product/rum">Real-User Monitoring</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Company</strong></li><li><a href="https://plumbr.io/about-us">About us</a></li><li><a href="https://plumbr.io/join-us">Join us</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Support</strong></li><li><a href="https://plumbr.io/support/manual">Manual</a></li><li><a href="https://plumbr.io/support/what-is-plumbr-2">FAQ</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Resources</strong></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/java-garbage-collection-handbook">Garbage Collection Handbook</a></li><li><a href="https://plumbr.io/outofmemoryerror">Memory Leak Handbook</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Pricing</strong></li><li><a href="https://plumbr.io/pricing">Pricing</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Integrations</strong></li><li><a href="https://plumbr.io/support/manual#browser-agent-api">Browser Agent API</a></li><li><a href="https://plumbr.io/support/manual#agent-api">Java Agent API</a></li><li><a href="https://app.plumbr.io/docs">Server API</a></li><li><a href="https://plumbr.io/integrations/nagios">Nagios</a></li><li><a href="https://plumbr.io/integrations/prometheus">Prometheus</a></li><li><a href="https://plumbr.io/integrations/zabbix">Zabbix</a></li></ul></div></div><div class="textwidget custom-html-widget"><ul class="social">
+	<li><a href="mailto:support@plumbr.io"><i class="icon icon-mail-alt"></i></a></li>
+	<li><a target="_blank" href="https://twitter.com/JavaPlumbr" rel="noopener noreferrer"><i class="icon icon-twitter-squared"></i></a></li>
+	<li><a target="_blank" href="https://www.linkedin.com/company/plumbr" rel="noopener noreferrer"><i class="icon icon-linkedin-squared"></i></a></li>
+	<li>
+<a style="display: flex;" href="https://www.capterra.com/reviews/151215/Plumbr?utm_source=vendor&amp;utm_medium=badge&amp;utm_campaign=capterra_reviews_badge">  <img alt="capterra" style="height: 23px;
+width: 45px;" border="0" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/67206f388f45e0bc89ee313994c73a7d.png"></a>
+</li>
+</ul>
+<p id="copyright">© Copyright Plumbr. All Rights Reserved. </p></div>		</div>
+	</div>
+	
+<div id="modal-wrap">
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	<div class="modal login" id="modal-login">
+	<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" id="modal-login-close" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Log In</h2>
+	<form id="modal-login-form">
+		<dl class="form">
+			<dt><label for="login-mail">Your e-mail</label></dt>
+			<dd>
+				<input name="userName" type="email" id="login-mail" class="txt" maxlength="255" autofocus="autofocus" tabindex="1">
+			</dd>
+			<dt><label for="login-password">Password</label></dt>
+			<dd>
+				<input name="password" type="password" id="login-password" class="txt" maxlength="255" tabindex="2">
+				<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" id="forgot-password" data-modal="modal-new-password" tabindex="5">Forgot your password?</a>
+			</dd>
+			<dd><input name="isFromComment" type="hidden" id="login-comment" class="txt" value="false"></dd>
+		</dl>
+		<p class="form-action"><input id="modal-login-submit" type="submit" class="btn big" value="LOG IN" tabindex="3"></p>
+	</form>
+</div>
+	<div class="modal login" id="modal-new-password">
+	<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Reset password</h2>
+	<p>You will receive a link to create a new password via email.</p>
+
+	<div class="msg-icon hidden" id="reset-success">
+		<i class="icon icon-ok"></i>
+
+		<div class="aligner">
+			<p>Instructions on how to change your password have been sent to your e-mail.</p>
+		</div>
+	</div>
+
+	<form>
+		<dl class="form">
+			<dt><label for="new-mail">Email</label></dt>
+			<dd><input name="email" type="email" id="new-mail" class="txt"></dd>
+		</dl>
+		<p class="form-action"><input type="submit" class="btn big" value="Get new password"></p>
+	</form>
+</div>
+	<div class="modal signup" id="modal-register">
+	<a href="https://plumbr.io/handbook/gc-tuning-in-practice#" class="close"><i class="icon icon-cancel"></i></a>
+	<div class="register">
+		<h2>Notification</h2>
+		<p class="info">Plumbr has been acquired by Splunk and no longer offers trial access to its product.
+		Read more <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">here</a></p>
+	</div>
+</div>
+
+	<div class="modal video" id="modal-video">
+		<a id="close-video" href="https://plumbr.io/handbook/gc-tuning-in-practice#" class="close"><i class="icon icon-cancel"></i></a>
+		<div class="flex-video">
+			<div id="video01"></div>
+		</div>
+	</div>
+
+	
+	
+	
+
+
+
+
+
+</div>
+	
+<div id="cookie-consent" class="cookies" style="display: none;">
+    <div id="overview">
+        <p>This site uses cookies in order to provide a better user experience to you.</p>
+
+        <div class="buttons">
+            <button id="acceptAll" class="cbtn wide">Accept all cookies</button>
+            <button id="cookieSettings" class="cbtn wide deny">Cookie settings</button>
+        </div>
+    </div>
+
+    <div id="settings" class="hidden">
+        <div>
+            <label class="cookie-label disabled">
+                Required cookies
+                <input checked="true" type="checkbox" disabled="">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies are required to enable core site functionality.</p>
+        </div>
+
+        <div class="cookie-type">
+            <label class="cookie-label">
+                Statistics &amp; analytics cookies
+                <input id="analytics-checkbox" type="checkbox">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies give us information about how you use our website and allow us to improve
+                the user experience.</p>
+        </div>
+
+        <p>To learn more about our cookie usage click <a href="https://plumbr.io/support/plumbr-cookies" target="_blank">here</a>.</p>
+
+        <div style="margin-top: 10px;">
+            <button id="cookieCancel" class="cbtn">Cancel</button>
+            <button id="cookieSave" class="cbtn">Save</button>
+        </div>
+    </div>
+</div>
+	
+<script type="text/javascript">
+/* <![CDATA[ */
+var leadin_wordpress = {"userRole":"visitor","pageType":"post","leadinPluginVersion":"7.48.24"};
+/* ]]> */
+</script>
+<script async="" defer="" id="hs-script-loader" type="text/javascript" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(2).download"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var param = {"portalUrl":"https:\/\/app.plumbr.io"};
+/* ]]> */
+</script>
+
+
+
+<script type="text/javascript">
+/* <![CDATA[ */
+var local = {"isSupportIndex":"","isSupportType":"","isEmailLandingPage":"","isSearch":"","ajaxurl":"https:\/\/plumbr.io\/wp\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+
+
+
+
+
+<script type="text/javascript" defer="" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/autoptimize_80f1fdb2d70c854f88929cb5e1e65e79.js.download"></script>
+
+<iframe owner="archetype" title="archetype" style="display: none; visibility: hidden;" src="./GC Tuning_ In Practice _ Plumbr – User Experience &amp; Application Performance Monitoring_files/saved_resource.html"></iframe></body></html>

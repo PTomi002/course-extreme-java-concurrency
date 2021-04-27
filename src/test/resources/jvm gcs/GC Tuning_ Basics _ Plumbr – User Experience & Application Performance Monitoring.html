@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<!-- saved from url=(0036)https://plumbr.io/handbook/gc-tuning -->
+<html lang="en"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+	
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+		<link rel="shortcut icon" href="https://plumbr.io/app/themes/plumbr/dist/images/favicon_9b72e733.png">
+
+	<title>GC Tuning: Basics | Plumbr – User Experience &amp; Application Performance Monitoring</title>
+
+<!-- The SEO Framework by Sybre Waaijer -->
+<meta name="description" content="Tuning garbage collection is no different from any other performance-tuning activity. It is easy to fall into the trap of randomly tweaking one of the 200…">
+<meta property="og:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta property="og:image:width" content="980">
+<meta property="og:image:height" content="370">
+<meta property="og:locale" content="en_US">
+<meta property="og:type" content="article">
+<meta property="og:title" content="GC Tuning: Basics | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="og:description" content="Tuning garbage collection is no different from any other performance-tuning activity. It is easy to fall into the trap of randomly tweaking one of the 200 GC-related JVM parameters or to start…">
+<meta property="og:url" content="https://plumbr.io/handbook/gc-tuning">
+<meta property="og:site_name" content="Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta property="article:publisher" content="https://www.facebook.com/javaplumbr">
+<meta property="article:published_time" content="2015-05-04T22:14+00:00">
+<meta property="article:modified_time" content="2018-12-12T13:46-01:00">
+<meta property="og:updated_time" content="2018-12-12T13:46-01:00">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@JavaPlumbr">
+<meta name="twitter:title" content="GC Tuning: Basics | Plumbr – User Experience &amp; Application Performance Monitoring">
+<meta name="twitter:description" content="Tuning garbage collection is no different from any other performance-tuning activity. It is easy to fall into the trap of randomly tweaking one of the 200 GC-related JVM parameters or to start…">
+<meta name="twitter:image" content="https://plumbr.io/app/uploads/2015/10/plumbr-980.png">
+<meta name="twitter:image:width" content="980">
+<meta name="twitter:image:height" content="370">
+<link rel="canonical" href="https://plumbr.io/handbook/gc-tuning">
+<script src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/collectedforms.js.download" type="text/javascript" id="CollectedForms-5894543" crossorigin="anonymous" data-leadin-portal-id="5894543" data-leadin-env="prod" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js.download" type="text/javascript" id="hs-analytics"></script><script src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(1).download" type="text/javascript" id="cookieBanner-5894543" data-cookieconsent="ignore" data-loader="hs-scriptloader" data-hsjs-portal="5894543" data-hsjs-env="prod" data-hsjs-hublet="na1"></script><script async="" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/analytics.js.download"></script><script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"https://plumbr.io/","name":"Plumbr &#8211; User Experience &amp; Application Performance Monitoring"}},{"@type":"ListItem","position":2,"item":{"@id":"https://plumbr.io/handbook/java-garbage-collection-handbook","name":"Java Garbage Collection handbook"}},{"@type":"ListItem","position":3,"item":{"@id":"https://plumbr.io/handbook/gc-tuning","name":"GC Tuning: Basics"}}]}</script>
+<!-- / The SEO Framework by Sybre Waaijer | 3.44ms meta | 0.37ms boot -->
+
+<link rel="dns-prefetch" href="https://js.hs-scripts.com/">
+<link rel="dns-prefetch" href="https://use.typekit.net/">
+<link rel="stylesheet" id="wp-block-library-css" href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/style.min.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/main.css-css" href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/main_113b80ea.css" type="text/css" media="all">
+<link rel="stylesheet" id="plumbr/typekit.css-css" href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/thh1ylu.css" type="text/css" media="all">
+
+<link rel="https://api.w.org/" href="https://plumbr.io/wp-json/">
+<link rel="alternate" type="application/json+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning">
+<link rel="alternate" type="text/xml+oembed" href="https://plumbr.io/wp-json/oembed/1.0/embed?url=https%3A%2F%2Fplumbr.io%2Fhandbook%2Fgc-tuning&amp;format=xml">
+			<!-- DO NOT COPY THIS SNIPPET! Start of Page Analytics Tracking for HubSpot WordPress plugin v7.48.24-->
+			<script type="text/javascript">
+				var _hsq = _hsq || [];
+				_hsq.push(["setContentType", "blog-post"]);
+			</script>
+			<!-- DO NOT COPY THIS SNIPPET! End of Page Analytics Tracking for HubSpot WordPress plugin -->
+						<script>
+				(function() {
+					var hbspt = window.hbspt = window.hbspt || {};
+					hbspt.forms = hbspt.forms || {};
+					hbspt._wpFormsQueue = [];
+					hbspt.enqueueForm = function(formDef) {
+						if (hbspt.forms && hbspt.forms.create) {
+							hbspt.forms.create(formDef);
+						} else {
+							hbspt._wpFormsQueue.push(formDef);
+						}
+					}
+					if (!window.hbspt.forms.create) {
+						Object.defineProperty(window.hbspt.forms, 'create', {
+							configurable: true,
+							get: function() {
+								return hbspt._wpCreateForm;
+							},
+							set: function(value) {
+								hbspt._wpCreateForm = value;
+								while (hbspt._wpFormsQueue.length) {
+									var formDef = hbspt._wpFormsQueue.shift();
+									if (!document.currentScript) {
+										var formScriptId = 'leadin-forms-v2-js';
+										hubspot.utils.currentScript = document.getElementById(formScriptId);
+									}
+									hbspt._wpCreateForm.call(hbspt.forms, formDef);
+								}
+							},
+						});
+					}
+				})();
+			</script>
+		<style type="text/css">.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+			<link rel="stylesheet" href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/prettify.css">
+	
+	    <script>
+        (function () {
+            var RDECODE = /(%[0-9A-Z]{2})+/g;
+
+            function plumbrGetCookie(e) {
+                var o = document.cookie ? document.cookie.split("; ") : [];
+                for (var c = 0; c < o.length; c++) {
+                    var n = o[c].indexOf("=");
+                    if (e === o[c].slice(0, n).replace(RDECODE, decodeURIComponent)) {
+                        return o[c].slice(n + 1).replace(RDECODE, decodeURIComponent)
+                    }
+                }
+            }
+            try {
+                var plumbrConsentCookie = plumbrGetCookie('plumbrCookieConsent')
+                if (plumbrConsentCookie) {
+                    window.plumbrConsent = JSON.parse(plumbrConsentCookie);
+                }
+            } catch (e) {
+                console.error('Cookie error')
+            }
+        })()
+    </script>
+	<script src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/pa-early.js.download" crossorigin="anonymous" data-plumbr-lateinit=""></script>
+	<script>
+		var paConf = {
+            "accountId": "k8g0ta8m6e7gsb2afhq6qm5efh",
+            "serverUrl": "https://plumbr.plumbr.io",
+            "appName": "plumbr.io"
+		}
+
+		if (!window.plumbrConsent || !window.plumbrConsent.analytics) {
+            paConf["tracking"] = {
+                "user": false,
+                "session": false
+            };
+        }
+
+        PLUMBR.init(paConf);
+	</script>
+
+    
+    <script>
+		if (!window.plumbrConsentCookie || !window.plumbrConsentCookie.analytics) {
+            window['ga-disable-UA-25569981-1'] = true;
+		}
+
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+            m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-25569981-1', 'auto');
+        ga('require', 'displayfeatures');
+        ga('require', 'eventTracker');
+        ga('require', 'outboundLinkTracker');
+        ga('send', 'pageview');
+    </script>
+
+	<script type="application/ld+json">
+	{
+		"@context" : "http://schema.org",
+		"@type"    : "Organization",
+		"name"     : "Plumbr &#8211; User Experience &amp; Application Performance Monitoring",
+		"url" 	   : "https://plumbr.io",
+		"sameAs"   : [
+			"https://www.facebook.com/javaplumbr",
+            "https://twitter.com/JavaPlumbr",
+            "https://www.linkedin.com/company/plumbr"
+		]
+	}
+</script></head>
+
+<body class=" ">
+<div class="top-banner">
+	Splunk Completes Acquisition of Plumbr <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">Learn more <i class="icon icon-right-open"></i></a>
+</div>
+<div id="header" class="clear">
+	<div class="wrap clear">
+		<p id="logo"><a href="https://plumbr.io/" class="icon icon-plumbr"></a></p>
+
+		<div id="user-box">
+			<a href="https://plumbr.io/handbook/gc-tuning#" data-modal="modal-login" class="js-show-logged-out">Log In</a>
+			<a href="https://plumbr.io/handbook/gc-tuning#" class="btn cta" id="menu-toggler"><i class="icon icon-menu"></i></a>
+
+			<a id="continueMonitoring" href="https://app.plumbr.io/" class="btn cta btn-icon hidden js-show-logged-in"><i class="icon icon-chart-area hidden"></i> Continue Monitoring</a>
+		</div>
+
+					<ul id="nav" class="menu"><li class="parent"><a href="https://plumbr.io/product">Product</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/product/features">Features</a></li><li><a href="https://plumbr.io/product/apm">APM</a></li><li><a href="https://plumbr.io/product/rum">RUM</a></li><li><a href="https://plumbr.io/integrations">Integrations</a></li></ul></div></li><li class="parent"><a href="https://plumbr.io/solutions">Solutions</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/solutions/devops">Devops</a></li><li><a href="https://plumbr.io/solutions/oncall-engineers">On-call Engineers</a></li></ul></div></li><li><a href="https://plumbr.io/pricing">Pricing</a></li><li class="parent"><a href="https://plumbr.io/handbook/gc-tuning#">Resources</a><div class="submenu" style="display: none;"><ul><li><a href="https://plumbr.io/how-plumbr-works">How Plumbr Works</a></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/case-study/port-of-tallinn">Case studies</a></li><li><a href="https://plumbr.io/support">Support</a></li><li><a href="https://plumbr.io/root-causes">Root Causes</a></li></ul></div></li></ul>			</div>
+</div>
+
+
+
+<div id="user-nav">
+    <div class="wrap clear">
+        <ul>
+                <li class="">
+        <a href="https://plumbr.io/outofmemoryerror">
+            <i class="icon icon-book"></i>
+			java.lang.Outofmemoryerror        </a>
+    </li>
+    <li class="active">
+        <a href="https://plumbr.io/java-garbage-collection-handbook">
+            <i class="icon icon-book"></i>
+			Java Garbage Collection handbook        </a>
+    </li>
+	        </ul>
+    </div>
+</div>
+<div id="content">
+    <div class="wrap split">
+
+        <p id="sidebar-toggler">
+            <a href="https://plumbr.io/handbook/gc-tuning#" data-label="Close categories">
+                <i class="icon icon-menu"></i>
+                <i class="icon icon-cancel"></i>
+                <span class="label">Handbook menu</span>
+            </a>
+        </p>
+
+        <div id="sidebar">
+
+			    <div class="floating-wrap" style="padding-top: 0px;">
+        <div class="floating-content" style="position: static; top: auto; left: 0px; bottom: auto; width: 226px; margin-bottom: 0px;">
+			
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/what-is-garbage-collection">
+							What Is Garbage Collection?                        </a>
+						                            <a href="https://plumbr.io/handbook/what-is-garbage-collection" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#manual-memory-management">
+						Manual Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#on-demand">
+						Smart Pointers                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#automated-memory-management">
+						Automated Memory Management                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#reference-counting">
+						Reference Counting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/what-is-garbage-collection#mark-and-sweep">
+						Mark and Sweep                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-in-java">
+							Garbage Collection in Java                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-in-java" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#fragmenting-and-compacting">
+						Fragmenting and Compacting                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#generational-hypothesis">
+						Generational Hypothesis                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#memory-pools">
+						Memory Pools                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#eden">
+						Eden                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#survivor-spaces">
+						Survivor Spaces                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#oldtenured-space">
+						Old Generation                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#permgen">
+						PermGen                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#metaspace">
+						Metaspace                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc-major-gc-full-gc">
+						Minor GC vs Major GC vs Full GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-in-java#major-gc-vs-full-gc">
+						Major GC vs Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms">
+							GC Algorithms: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#marking-reachable-objects">
+						Marking Reachable Objects                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#removing-unused-objects">
+						Removing Unused Objects                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#sweep">
+						Sweep                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#compact">
+						Compact                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms#copy">
+						Copy                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations">
+							GC Algorithms: Implementations                        </a>
+						                            <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-gc">
+						Serial GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#serial-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-gc">
+						Parallel GC                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#parallel-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-mark-and-sweep">
+						Concurrent Mark and Sweep                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-minor-gc">
+						Minor GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#cms-full-gc">
+						Full GC                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#g1">
+						G1 – Garbage First                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-fully-young">
+						Evacuation Pause: Fully Young                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#concurrent-marking">
+						Concurrent Marking                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#evacuation-pause-mixed">
+						Evacuation Pause: Mixed                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#summary">
+						Summary                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/garbage-collection-algorithms-implementations#shenandoah">
+						Shenandoah                    </a>
+							                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu active open">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning">
+							GC Tuning: Basics                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput-vs-latency-vs-capacity">
+						Core Concepts                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#latency">
+						Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#throughput">
+						Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#capacity">
+						Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#example">
+						Example                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-latency">
+						Tuning for Latency                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-throughput">
+						Tuning for Throughput                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning#tuning-for-capacity">
+						Tuning for Capacity                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-measuring">
+							GC Tuning: Tooling                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-measuring" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jmx-api">
+						JMX API                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jvisualvm">
+						JVisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#jstat">
+						jstat                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gc-logs">
+						GC logs                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#gcviewer">
+						GCViewer                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#profilers">
+						Profilers                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#hprof">
+						hprof                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#java-visualvm">
+						Java VisualVM                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-measuring#aprof">
+						AProf                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+							
+                <div class="box menu ">
+                    <h2>
+                        <a href="https://plumbr.io/handbook/gc-tuning-in-practice">
+							GC Tuning: In Practice                        </a>
+						                            <a href="https://plumbr.io/handbook/gc-tuning-in-practice" class="expander"><i class="icon icon-down-open"></i><i class="icon icon-up-open"></i></a>
+						                    </h2>
+								        <ul class=" support-menu">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#high-allocation-rate">
+						High Allocation Rate                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-allocation-rate">
+						How to Measure Allocation Rate?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#premature-promotion">
+						Premature Promotion                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#how-to-measure-promotion-rate">
+						How to Measure Promotion Rate                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-promotion">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-promotion">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-promotion">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-promotion">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#weak-soft-and-phantom-references">
+						Weak, Soft and Phantom References                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#why-should-i-care-references">
+						Why Should I Care?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#give-me-an-example-references">
+						Give me an Example                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#could-my-jvms-be-affected-references">
+						Could my JVMs be Affected?                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#what-is-the-solution-references">
+						What is the Solution?                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#other-examples">
+						Other Examples                    </a>
+								        <ul class="">
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#rmi-gc">
+						RMI &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#jvmti-tagging-gc">
+						JVMTI tagging &amp; GC                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#humongous-allocations">
+						Humongous Allocations                    </a>
+							                </li>
+			                <li>
+                    <a href="https://plumbr.io/handbook/gc-tuning-in-practice#conclusion">
+						Conclusion                    </a>
+							                </li>
+			        </ul>
+		                </li>
+			        </ul>
+		                </div>
+			        </div>
+    </div>
+	
+        </div>
+        <div id="main">
+            <div class="article handbook">
+									
+<h1 class="highlight">GC Tuning: Basics</h1>
+<p>Tuning garbage collection is no different from any other performance-tuning activity. It is easy to fall into the trap of randomly tweaking one of the 200 GC-related JVM parameters or to start changing random parts of your application code. Instead, following a simple process will guarantee that you are actually moving towards the right target while being transparent about the progress:</p>
+<ol>
+<li>State your performance goals</li>
+<li>Run tests</li>
+<li>Measure the results</li>
+<li>Compare the results with the goals</li>
+<li>If goals are not met, make a change and go back to running tests</li>
+</ol>
+<p>So, as the first step we need to set clear performance goals in regards of Garbage Collection. The goals fall into&nbsp;three categories, which are common to all&nbsp;performance monitoring and management topics:</p>
+<ul>
+<li>Latency</li>
+<li>Throughput</li>
+<li>Capacity</li>
+</ul>
+<p>After explaining the concepts in general, we will demonstrate how to apply these goals in the context of Garbage Collection. If you are already familiar with the concepts of latency, throughput and capacity, you may decide to skip the next section.</p>
+
+					<h2 id="throughput-vs-latency-vs-capacity">Core Concepts</h2><p>Let us start with an example from manufacturing by observing an assembly line in a factory. The line is assembling bikes from ready-made components. Bikes are built on this line in a sequential manner. Monitoring the line in action, we measure that it takes&nbsp;<strong>four hours</strong>&nbsp;to complete a bike from the moment the frame enters the line until the assembled bike leaves the line at the other end.</p>
+<p><a style="line-height: 1.5;" href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/assembly-line01-compact.jpg"><img class="alignnone size-full wp-image-5036" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/assembly-line01-compact.jpg" alt="assembly line" srcset="https://plumbr.io/app/uploads/2015/06/assembly-line01-compact.jpg 580w, https://plumbr.io/app/uploads/2015/06/assembly-line01-compact-300x98.jpg 300w" sizes="(max-width: 580px) 100vw, 580px"></a></p>
+<p>Continuing our observations we can also see that one bike is assembled after each minute, 24 hours a day, every day. Simplifying the example and ignoring maintenance windows, we can forecast that in&nbsp;<strong>any given hour such an assembly line assembles 60 bikes</strong>.</p>
+<p>Equipped with these two measurements, we now possess crucial information about the current performance of the assembly line in&nbsp;regards of&nbsp;<strong>latency</strong>&nbsp;and&nbsp;<strong>throughput</strong>:</p>
+<ul>
+<li><strong>Latency of the assembly line: 4 hours</strong></li>
+<li><strong>Throughput of the assembly line: 60 bikes/hour</strong></li>
+</ul>
+<p>Notice that latency is measured in time units suitable for the task at hand – anything from nanoseconds to millennia can be a good choice. Throughput of a system is measured in completed operations per time unit. Operations can be anything relevant to the specific system. In this example the chosen time unit was hours and operations were the assembled bikes.</p>
+<p>Having been equipped with the definitions of latency and throughput, let us carry out a performance tuning exercise in the very same factory. The demand for the bikes has been steady for a while and the assembly line has kept producing bikes with the latency of four hours and the throughput of 60 bikes/hour for months. Let us now imagine a situation where the sales team has been successful and the demand for the bikes suddenly doubles. Instead of the usual 60*24 = 1,440 bikes/day the customers demand twice as many. The performance of the factory is no longer satisfactory and something needs to be done.</p>
+<p>The factory manager seemingly correctly concludes that the latency of the system is not a concern – instead he should focus on the total number of bikes produced per day. Coming to this conclusion and assuming he is well funded, the hypothetical manager would immediately take the necessary steps to improve throughput by adding capacity.</p>
+<p>As a result we would now be observing not one but two identical assembly lines in the same factory. Both of these assembly lines would be assembling the very same bike every minute of every day. By doing this, our imaginary factory has doubled the number of bikes produced per day. Instead of the 1,440 bikes the factory is now capable of shipping 2,880 bikes each day. It is important to note that we have not reduced the time to complete an individual bike by even a millisecond – it still takes four hours to complete a bike from start to finish.</p>
+<p><a href="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/assembly-line02-compact.jpg"><img class="alignnone size-full wp-image-5037" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/assembly-line02-compact.jpg" alt="assembly line" srcset="https://plumbr.io/app/uploads/2015/06/assembly-line02-compact.jpg 580w, https://plumbr.io/app/uploads/2015/06/assembly-line02-compact-300x116.jpg 300w" sizes="(max-width: 580px) 100vw, 580px"></a></p>
+<p>In the example above a performance optimization task was carried out, coincidentally impacting both&nbsp;<strong>throughput and capacity</strong>. As in any good example we started by measuring the system’s current performance, then set a new target and optimized the system only in the aspects required to meet the target.</p>
+<p>In this example an important decision was made – the focus was on increasing throughput, not on reducing latency. While increasing the throughput, we also needed to increase the capacity of the system. Instead of a single assembly line we now needed two assembly lines to produce the required quantity. So in this case the added throughput was not free, the solution needed to be scaled out in order to meet the increased throughput requirement.</p>
+<p>An important alternative should also be considered for the performance problem at hand. The seemingly non-related latency of the system actually hides a different solution to the problem. If the latency of the assembly line could have been reduced from 1 minute to 30 seconds, the very same increase of throughput would suddenly be possible without any additional capacity.</p>
+<p>Whether or not reducing latency was possible or economical in this case is not relevant. What is important is a concept very similar to software engineering – you can almost always choose between two solutions to a performance problem. You can either throw more hardware towards the problem or spend time improving the poorly performing code.</p>
+<h3 id="latency">Latency</h3><p>Latency goals for the GC have to be derived from generic latency requirements. Generic latency requirements are typically expressed in a form similar to the following:</p>
+<ul>
+<li>All&nbsp;user transactions must&nbsp;respond in less than 10 seconds</li>
+<li>90% of the invoice payments must be carried out in under 3 seconds</li>
+<li>Recommended products must be rendered to a purchase screen in less than 100 ms</li>
+</ul>
+<p>When facing performance goals similar to the above, we would need to make sure that the duration of GC pauses during the transaction does not contribute too much to violating the requirements. “Too much” is application-specific and needs to take into account other factors contributing to latency including round-trips to external data sources, lock contention issues and other safe points among these.</p>
+<p>Let us assume our performance requirements state that 90% of the transactions to the application need to complete under 1,000 ms and no transaction can exceed 10,000 ms. Out of those generic latency requirements let us again assume that GC pauses cannot contribute more than 10%. From this, we can conclude that 90% of GC pauses have to complete under 100 ms, and no GC pause can exceed 1,000 ms. For simplicity’s sake let us ignore in this example multiple pauses that can occur during the same transaction.</p>
+<p>Having formalized the requirement, the next step is to measure pause durations. There are many tools for the job, covered in more detail in the&nbsp;chapter on <a href="https://plumbr.io/handbook/gc-tuning-measuring">Tooling</a>, but in this section, let us use GC logs, namely for the duration of GC pauses. The information required is present in different log snippets so let us take a look which parts of date/time data are actually relevant, using the following example:</p>
+<pre>2015-06-04T13:34:16.974-0200: 2.578: [Full GC (Ergonomics) [PSYoungGen: 93677K-&gt;70109K(254976K)] [ParOldGen: 499597K-&gt;511230K(761856K)] 593275K-&gt;581339K(1016832K), [Metaspace: 2936K-&gt;2936K(1056768K)], 0.0713174 secs] [Times: user=0.21 sys=0.02, real=0.07 secs</pre>
+<p>The example above expresses a single GC pause triggered at 13:34:16 on June 4, 2015, just 2,578 ms after the JVM was started.</p>
+<p>The event stopped the application threads&nbsp;for&nbsp;<strong>0.0713174 seconds</strong>. Even though it took 210 ms of CPU times on multiple cores, the important number for us to measure is the total stop time for application threads, which in this case, where parallel GC was used on a multi-core machine, is equal to a bit more than 70 ms. This specific GC pause is thus well under the required 100 ms threshold and fulfils both requirements.</p>
+<p>Extracting information similar to the example above from all GC pauses, we can aggregate the numbers and see whether or not we are violating the set requirements for any of the pause events triggered.</p>
+<h3 id="throughput">Throughput</h3><p>Throughput requirements are different from latency requirements. The only similarity that the throughput requirements share with latency is the fact that again, these requirements need to be derived from generic throughput requirements. Generic requirements for throughput can be similar to the following:</p>
+<ul>
+<li>The solution must be able to process 1,000,000 invoices/day</li>
+<li>The solution must support 1,000 authenticated users each invoking one of the functions A, B or C every five to ten seconds</li>
+<li>Weekly statistics for all customers have to be composed in no more than six hours each Sunday night between 12 PM and 6 AM</li>
+</ul>
+<p>So, instead of setting requirements for a&nbsp;single operation, the requirements for throughput specify how many operations the system must process in a&nbsp;given time unit. Similar to the latency requirements, the GC tuning part now requires determining the total time that can be spent on GC during the time measured. How much is tolerable for the particular system is again application-specific, but as a rule of thumb, anything over 10% would look suspicious.</p>
+<p>Let us now assume that the requirement at hand foresees that the system processes 1,000 transactions per minute. Let us also assume that the total duration of GC pauses during any minute cannot exceed six seconds (or 10%) of this time.</p>
+<p>Having formalized the requirements, the next step would be to harvest the information we need. The source to be used in the example is again GC logs, from which we would get information similar to the following:</p>
+<pre>2015-06-04T13:34:16.974-0200: 2.578: [Full GC (Ergonomics) [PSYoungGen: 93677K-&gt;70109K(254976K)] [ParOldGen: 499597K-&gt;511230K(761856K)] 593275K-&gt;581339K(1016832K), [Metaspace: 2936K-&gt;2936K(1056768K)], 0.0713174 secs] [Times: user=0.21 sys=0.02, real=0.07 secs</pre>
+<p>This time we are interested in user and system times instead of real time. In this case we should focus on 23 milliseconds (21 + 2 ms in user and system times) during which the particular GC pause kept CPUs busy. Even more important is the fact that the system was running on a multi-core machine, translating to the actual stop-the-world pause of&nbsp;<strong>0.0713174 seconds</strong>, which is the number to be used in the following calculations.</p>
+<p>Extracting the information similar to the above from the GC logs across the test period, all that is left to be done is to verify the total duration of the stop-the-world pauses during each minute. In case the total duration of the pauses does not exceed 6,000ms or six seconds in any of these one-minute periods, we have fulfilled our requirement.</p>
+<h3 id="capacity">Capacity</h3><p>Capacity requirements put additional constraints on the environment where the throughput and latency goals can be met. These requirements might be expressed either in terms of computing resources or in cold hard cash. The ways in which such requirements can be described can, for example, take the following form:</p>
+<ul>
+<li>The system must be deployed on Android devices with less than 512 MB of memory</li>
+<li>The system must be deployed on Amazon&nbsp;<strong>EC2</strong> The maximum required instance size must not exceed&nbsp;the configuration <strong>c3.xlarge (8 G, 4 cores)</strong></li>
+<li>The monthly invoice from Amazon EC2 for running the system must not exceed $12,000</li>
+</ul>
+<p>Thus, capacity has to be taken into account when fulfilling the latency and throughput requirements. With unlimited computing power, any kind of latency and throughput targets could be met, yet in the real world the budget and other constraints have a tendency to set limits on the resources one can use.</p>
+
+<h2 id="example">Example</h2><p>Now that we have covered the three dimensions of performance tuning, we can start investigating setting and hitting GC performance goals in practice.</p>
+<p>For this purpose, let us take a look at an example code:</p>
+<pre class="prettyprint prettyprinted" style=""><code class="language-java"><span class="com">//imports skipped for brevity</span><span class="pln">
+</span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">class</span><span class="pln"> </span><span class="typ">Producer</span><span class="pln"> </span><span class="kwd">implements</span><span class="pln"> </span><span class="typ">Runnable</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="typ">ScheduledExecutorService</span><span class="pln"> executorService </span><span class="pun">=</span><span class="pln"> </span><span class="typ">Executors</span><span class="pun">.</span><span class="pln">newScheduledThreadPool</span><span class="pun">(</span><span class="lit">2</span><span class="pun">);</span><span class="pln">
+
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="typ">Deque</span><span class="pun">&lt;</span><span class="kwd">byte</span><span class="pun">[]&gt;</span><span class="pln"> deque</span><span class="pun">;</span><span class="pln">
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">int</span><span class="pln"> objectSize</span><span class="pun">;</span><span class="pln">
+  </span><span class="kwd">private</span><span class="pln"> </span><span class="kwd">int</span><span class="pln"> queueSize</span><span class="pun">;</span><span class="pln">
+
+  </span><span class="kwd">public</span><span class="pln"> </span><span class="typ">Producer</span><span class="pun">(</span><span class="kwd">int</span><span class="pln"> objectSize</span><span class="pun">,</span><span class="pln"> </span><span class="kwd">int</span><span class="pln"> ttl</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="kwd">this</span><span class="pun">.</span><span class="pln">deque </span><span class="pun">=</span><span class="pln"> </span><span class="kwd">new</span><span class="pln"> </span><span class="typ">ArrayDeque</span><span class="pun">&lt;</span><span class="kwd">byte</span><span class="pun">[]&gt;();</span><span class="pln">
+    </span><span class="kwd">this</span><span class="pun">.</span><span class="pln">objectSize </span><span class="pun">=</span><span class="pln"> objectSize</span><span class="pun">;</span><span class="pln">
+    </span><span class="kwd">this</span><span class="pun">.</span><span class="pln">queueSize </span><span class="pun">=</span><span class="pln"> ttl </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1000</span><span class="pun">;</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+
+  </span><span class="lit">@Override</span><span class="pln">
+  </span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> run</span><span class="pun">()</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    </span><span class="kwd">for</span><span class="pln"> </span><span class="pun">(</span><span class="kwd">int</span><span class="pln"> i </span><span class="pun">=</span><span class="pln"> </span><span class="lit">0</span><span class="pun">;</span><span class="pln"> i </span><span class="pun">&lt;</span><span class="pln"> </span><span class="lit">100</span><span class="pun">;</span><span class="pln"> i</span><span class="pun">++)</span><span class="pln"> </span><span class="pun">{</span><span class="pln"> deque</span><span class="pun">.</span><span class="pln">add</span><span class="pun">(</span><span class="kwd">new</span><span class="pln"> </span><span class="kwd">byte</span><span class="pun">[</span><span class="pln">objectSize</span><span class="pun">]);</span><span class="pln"> </span><span class="kwd">if</span><span class="pln"> </span><span class="pun">(</span><span class="pln">deque</span><span class="pun">.</span><span class="pln">size</span><span class="pun">()</span><span class="pln"> </span><span class="pun">&gt;</span><span class="pln"> queueSize</span><span class="pun">)</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+        deque</span><span class="pun">.</span><span class="pln">poll</span><span class="pun">();</span><span class="pln">
+      </span><span class="pun">}</span><span class="pln">
+    </span><span class="pun">}</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+
+  </span><span class="kwd">public</span><span class="pln"> </span><span class="kwd">static</span><span class="pln"> </span><span class="kwd">void</span><span class="pln"> main</span><span class="pun">(</span><span class="typ">String</span><span class="pun">[]</span><span class="pln"> args</span><span class="pun">)</span><span class="pln"> </span><span class="kwd">throws</span><span class="pln"> </span><span class="typ">InterruptedException</span><span class="pln"> </span><span class="pun">{</span><span class="pln">
+    executorService</span><span class="pun">.</span><span class="pln">scheduleAtFixedRate</span><span class="pun">(</span><span class="kwd">new</span><span class="pln"> </span><span class="typ">Producer</span><span class="pun">(</span><span class="lit">200</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1024</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1024</span><span class="pln"> </span><span class="pun">/</span><span class="pln"> </span><span class="lit">1000</span><span class="pun">,</span><span class="pln"> </span><span class="lit">5</span><span class="pun">),</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">100</span><span class="pun">,</span><span class="pln"> </span><span class="typ">TimeUnit</span><span class="pun">.</span><span class="pln">MILLISECONDS</span><span class="pun">);</span><span class="pln">
+    executorService</span><span class="pun">.</span><span class="pln">scheduleAtFixedRate</span><span class="pun">(</span><span class="kwd">new</span><span class="pln"> </span><span class="typ">Producer</span><span class="pun">(</span><span class="lit">50</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1024</span><span class="pln"> </span><span class="pun">*</span><span class="pln"> </span><span class="lit">1024</span><span class="pln"> </span><span class="pun">/</span><span class="pln"> </span><span class="lit">1000</span><span class="pun">,</span><span class="pln"> </span><span class="lit">120</span><span class="pun">),</span><span class="pln"> </span><span class="lit">0</span><span class="pun">,</span><span class="pln"> </span><span class="lit">100</span><span class="pun">,</span><span class="pln"> </span><span class="typ">TimeUnit</span><span class="pun">.</span><span class="pln">MILLISECONDS</span><span class="pun">);</span><span class="pln">
+    </span><span class="typ">TimeUnit</span><span class="pun">.</span><span class="pln">MINUTES</span><span class="pun">.</span><span class="pln">sleep</span><span class="pun">(</span><span class="lit">10</span><span class="pun">);</span><span class="pln">
+    executorService</span><span class="pun">.</span><span class="pln">shutdownNow</span><span class="pun">();</span><span class="pln">
+  </span><span class="pun">}</span><span class="pln">
+</span><span class="pun">}</span></code></pre>
+<p>The code submits two jobs to run every 100 ms. Each job emulates objects with a specific lifespan: it creates objects, lets them leave for a predetermined amount of time and then forgets about them, allowing GC to reclaim the memory.</p>
+<p>When running the example with GC logging turned on with the following parameters:</p>
+<pre>-XX:+PrintGCDetails -XX:+PrintGCDateStamps -XX:+PrintGCTimeStamps</pre>
+<p>we immediately see the impact of GC in the log files, similarly to the following:</p>
+<pre>2015-06-04T13:34:16.119-0200: 1.723: [GC (Allocation Failure) [PSYoungGen: 114016K-&gt;73191K(234496K)] 421540K-&gt;421269K(745984K), 0.0858176 secs] [Times: user=0.04 sys=0.06, real=0.09 secs] 
+2015-06-04T13:34:16.738-0200: 2.342: [GC (Allocation Failure) [PSYoungGen: 234462K-&gt;93677K(254976K)] 582540K-&gt;593275K(766464K), 0.2357086 secs] [Times: user=0.11 sys=0.14, real=0.24 secs] 
+2015-06-04T13:34:16.974-0200: 2.578: [Full GC (Ergonomics) [PSYoungGen: 93677K-&gt;70109K(254976K)] [ParOldGen: 499597K-&gt;511230K(761856K)] 593275K-&gt;581339K(1016832K), [Metaspace: 2936K-&gt;2936K(1056768K)], 0.0713174 secs] [Times: user=0.21 sys=0.02, real=0.07 secs]</pre>
+<p>Based on the information in the log we can start improving the situation with three different goals in mind:</p>
+<ol>
+<li>Making sure the worst-case GC pause does not exceed a predetermined threshold</li>
+<li>Making sure the total time during which application threads are stopped does not exceed a predetermined threshold</li>
+<li>Reducing infrastructure costs while making sure we can still achieve reasonable latency and/or throughput targets</li>
+</ol>
+<p>For this, the code above was run for 10 minutes on three different configurations providing three very different results summarized in the following table:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><b>Heap</b></th>
+<th><b>GC Algorithm</b></th>
+<th><b>Useful work</b></th>
+<th><b>Longest pause</b></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>89.8%</td>
+<td>560 ms</td>
+</tr>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseParallelGC</td>
+<td>91.5%</td>
+<td>1,104 ms</td>
+</tr>
+<tr>
+<td>-Xmx8g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>66.3%</td>
+<td>1,610 ms</td>
+</tr>
+</tbody>
+</table>
+<p>The experiment ran the same code with different GC algorithms and different heap sizes to measure the duration of Garbage Collection pauses with regards to latency and throughput. Details of the experiments and an interpretation of the results are given in the following chapters.</p>
+<p>Note that in order to keep the example as simple as possible only a limited amount of input parameters were changed, for example the experiments do not test on different number of cores or with a different heap layout.</p>
+<h3 id="tuning-for-latency">Tuning for Latency</h3><p>Let us assume we have a requirement stating that <strong>all jobs must be processed in under 1,000 ms</strong>. Knowing that the actual job processing takes just 100 ms we can simplify and deduct the latency requirement for individual GC pauses. Our requirement now states that n<strong>o GC pause can stop the application threads for longer than 900 ms.&nbsp;</strong>Answering this question is easy, one would just need to parse the GC log files and find the maximum pause time for an individual GC pause.</p>
+<p>Looking again at the three configuration options used in the test:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><b>Heap</b></th>
+<th><b>GC Algorithm</b></th>
+<th><b>Useful work</b></th>
+<th><b>Longest pause</b></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>89.8%</td>
+<td><strong>560 ms</strong></td>
+</tr>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseParallelGC</td>
+<td>91.5%</td>
+<td>1,104 ms</td>
+</tr>
+<tr>
+<td>-Xmx8g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>66.3%</td>
+<td>1,610 ms</td>
+</tr>
+</tbody>
+</table>
+<p>we can see that there is one configuration that already matches this requirement. Running the code with:</p>
+<pre>java -Xmx12g -XX:+UseConcMarkSweepGC Producer</pre>
+<p>results in a maximum GC pause of&nbsp;<strong>560 ms,</strong>&nbsp;which nicely passes the&nbsp;<strong>900 ms</strong>&nbsp;threshold set for satisfying the latency requirement. If neither the throughput nor the capacity requirements are violated, we can conclude that we have fulfilled our GC tuning task and can finish the tuning exercise.</p>
+<h3 id="tuning-for-throughput">Tuning for Throughput</h3><p>Let us assume that we have a throughput goal to process&nbsp;<strong>13,000,000 jobs/hour</strong>. The example configurations used again give us a configuration where the requirement is fulfilled:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><b>Heap</b></th>
+<th><b>GC Algorithm</b></th>
+<th><b>Useful work</b></th>
+<th><b>Longest pause</b></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>89.8%</td>
+<td>560 ms</td>
+</tr>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseParallelGC</td>
+<td><strong>91.5%</strong></td>
+<td>1,104 ms</td>
+</tr>
+<tr>
+<td>-Xmx8g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>66.3%</td>
+<td>1,610 ms</td>
+</tr>
+</tbody>
+</table>
+<p>Running this configuration as:</p>
+<pre>java -Xmx12g -XX:+UseParallelGC Producer</pre>
+<p>we can see that the CPUs are blocked by GC for 8.5% of the time, leaving&nbsp;<strong>91.5%</strong>&nbsp;of the computing power for useful work. For simplicity’s sake we will ignore other safe points&nbsp;in the example. Now we have to take into account that:</p>
+<ol>
+<li>One job is processed in 100 ms by a single core</li>
+<li>Thus, in one minute, 60,000 jobs could be processed by one core</li>
+<li>In one hour, a single core could thus process 3.6 M jobs</li>
+<li>We have four cores available, which could thus process 4 x 3.6 M = 14.4 M jobs in an hour</li>
+</ol>
+<p>With this amount of theoretical processing power we can make a simple calculation and conclude that during one hour we can in reality process&nbsp;<strong>91.5%</strong>&nbsp;of the 14.4 M theoretical maximum resulting in&nbsp;<strong>13,176,000</strong>&nbsp;processed jobs/hour, fulfilling our requirement.</p>
+<p>It is important to note that if we simultaneously needed to fulfill the latency requirements set in the previous section, we would be in trouble, as the worst-case latency for this case is close to two times of the previous configuration. This time the longest GC pause on record was blocking the application threads for 1,104 ms.</p>
+<h3 id="tuning-for-capacity">Tuning for Capacity</h3><p>Let us assume we have to deploy our solution to the commodity-class hardware with up to four cores and 10 G RAM available. From this we can derive our capacity requirement that the <strong>maximum heap space for the application cannot exceed 8 GB</strong>. Having this requirement in place, we&nbsp;would need to turn to the third configuration on which the test was run:</p>
+<table class="data compact">
+<thead>
+<tr>
+<th><b>Heap</b></th>
+<th><b>GC Algorithm</b></th>
+<th><b>Useful work</b></th>
+<th><b>Longest pause</b></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>89.8%</td>
+<td>560 ms</td>
+</tr>
+<tr>
+<td>-Xmx12g</td>
+<td>-XX:+UseParallelGC</td>
+<td>91.5%</td>
+<td>1,104 ms</td>
+</tr>
+<tr>
+<td><strong>-Xmx8g</strong></td>
+<td>-XX:+UseConcMarkSweepGC</td>
+<td>66.3%</td>
+<td>1,610 ms</td>
+</tr>
+</tbody>
+</table>
+<p>The application is able to run on this configuration as</p>
+<pre>java -Xmx8g -XX:+UseConcMarkSweepGC Producer</pre>
+<p>but both the latency and especially throughput numbers fall drastically:</p>
+<ul>
+<li>GC now blocks CPUs from doing useful work a lot more, as this configuration only leaves&nbsp;<strong>66.3%</strong>&nbsp;of the CPUs for useful work. As a result, this configuration would drop the throughput from the best-case-scenario of&nbsp;<strong>13,176,000 jobs/hour</strong>&nbsp;to a meager <strong>9,547,200 jobs/hour</strong></li>
+<li>Instead of <strong>560 ms&nbsp;</strong>we are now facing&nbsp;<strong>1,610 ms</strong>&nbsp;of added latency in the worst case</li>
+</ul>
+<p>Walking through the three dimensions it is indeed obvious that you cannot just optimize for “performance” but instead need to think in three different dimensions, measuring and tuning both latency and throughput, and taking the capacity constraints into account.</p>
+
+				            </div>
+        </div>
+    </div>
+</div>
+
+	<div id="footer">
+		<div class="wrap">
+			<div id="menu-footer" class="row clear fat-footer"><div class="col-2"><ul><li class="title"><strong>Products &amp; Services</strong></li><li><a href="https://plumbr.io/application-monitoring">Application Monitoring</a></li><li><a href="https://plumbr.io/product/rum">Real-User Monitoring</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Company</strong></li><li><a href="https://plumbr.io/about-us">About us</a></li><li><a href="https://plumbr.io/join-us">Join us</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Support</strong></li><li><a href="https://plumbr.io/support/manual">Manual</a></li><li><a href="https://plumbr.io/support/what-is-plumbr-2">FAQ</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Resources</strong></li><li><a href="https://plumbr.io/blog">Blog</a></li><li><a href="https://plumbr.io/java-garbage-collection-handbook">Garbage Collection Handbook</a></li><li><a href="https://plumbr.io/outofmemoryerror">Memory Leak Handbook</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Pricing</strong></li><li><a href="https://plumbr.io/pricing">Pricing</a></li></ul></div><div class="col-2"><ul><li class="title"><strong>Integrations</strong></li><li><a href="https://plumbr.io/support/manual#browser-agent-api">Browser Agent API</a></li><li><a href="https://plumbr.io/support/manual#agent-api">Java Agent API</a></li><li><a href="https://app.plumbr.io/docs">Server API</a></li><li><a href="https://plumbr.io/integrations/nagios">Nagios</a></li><li><a href="https://plumbr.io/integrations/prometheus">Prometheus</a></li><li><a href="https://plumbr.io/integrations/zabbix">Zabbix</a></li></ul></div></div><div class="textwidget custom-html-widget"><ul class="social">
+	<li><a href="mailto:support@plumbr.io"><i class="icon icon-mail-alt"></i></a></li>
+	<li><a target="_blank" href="https://twitter.com/JavaPlumbr" rel="noopener noreferrer"><i class="icon icon-twitter-squared"></i></a></li>
+	<li><a target="_blank" href="https://www.linkedin.com/company/plumbr" rel="noopener noreferrer"><i class="icon icon-linkedin-squared"></i></a></li>
+	<li>
+<a style="display: flex;" href="https://www.capterra.com/reviews/151215/Plumbr?utm_source=vendor&amp;utm_medium=badge&amp;utm_campaign=capterra_reviews_badge">  <img alt="capterra" style="height: 23px;
+width: 45px;" border="0" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/67206f388f45e0bc89ee313994c73a7d.png"></a>
+</li>
+</ul>
+<p id="copyright">© Copyright Plumbr. All Rights Reserved. </p></div>		</div>
+	</div>
+	
+<div id="modal-wrap">
+	
+	
+	
+	
+	
+	
+	
+	
+	        <div class="modal full alt" id="leak-header">
+            <a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-header.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-growth">
+            <a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-growth.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-gc-impact">
+            <a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-gc-impact.png" alt="">
+        </div>
+
+        <div class="modal full alt" id="leak-pre-oom">
+            <a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+            <img src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/leak-pre-oom.png" alt="">
+        </div>
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	
+	<div class="modal login" id="modal-login">
+	<a href="https://plumbr.io/handbook/gc-tuning#" id="modal-login-close" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Log In</h2>
+	<form id="modal-login-form">
+		<dl class="form">
+			<dt><label for="login-mail">Your e-mail</label></dt>
+			<dd>
+				<input name="userName" type="email" id="login-mail" class="txt" maxlength="255" autofocus="autofocus" tabindex="1">
+			</dd>
+			<dt><label for="login-password">Password</label></dt>
+			<dd>
+				<input name="password" type="password" id="login-password" class="txt" maxlength="255" tabindex="2">
+				<a href="https://plumbr.io/handbook/gc-tuning#" id="forgot-password" data-modal="modal-new-password" tabindex="5">Forgot your password?</a>
+			</dd>
+			<dd><input name="isFromComment" type="hidden" id="login-comment" class="txt" value="false"></dd>
+		</dl>
+		<p class="form-action"><input id="modal-login-submit" type="submit" class="btn big" value="LOG IN" tabindex="3"></p>
+	</form>
+</div>
+	<div class="modal login" id="modal-new-password">
+	<a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+	<h2>Reset password</h2>
+	<p>You will receive a link to create a new password via email.</p>
+
+	<div class="msg-icon hidden" id="reset-success">
+		<i class="icon icon-ok"></i>
+
+		<div class="aligner">
+			<p>Instructions on how to change your password have been sent to your e-mail.</p>
+		</div>
+	</div>
+
+	<form>
+		<dl class="form">
+			<dt><label for="new-mail">Email</label></dt>
+			<dd><input name="email" type="email" id="new-mail" class="txt"></dd>
+		</dl>
+		<p class="form-action"><input type="submit" class="btn big" value="Get new password"></p>
+	</form>
+</div>
+	<div class="modal signup" id="modal-register">
+	<a href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+	<div class="register">
+		<h2>Notification</h2>
+		<p class="info">Plumbr has been acquired by Splunk and no longer offers trial access to its product.
+		Read more <a href="https://www.splunk.com/en_us/blog/conf-splunklive/splunk-extends-best-in-class-observability-suite.html">here</a></p>
+	</div>
+</div>
+
+	<div class="modal video" id="modal-video">
+		<a id="close-video" href="https://plumbr.io/handbook/gc-tuning#" class="close"><i class="icon icon-cancel"></i></a>
+		<div class="flex-video">
+			<div id="video01"></div>
+		</div>
+	</div>
+
+	
+	
+	
+
+
+
+
+
+</div>
+	
+<div id="cookie-consent" class="cookies" style="display: none;">
+    <div id="overview">
+        <p>This site uses cookies in order to provide a better user experience to you.</p>
+
+        <div class="buttons">
+            <button id="acceptAll" class="cbtn wide">Accept all cookies</button>
+            <button id="cookieSettings" class="cbtn wide deny">Cookie settings</button>
+        </div>
+    </div>
+
+    <div id="settings" class="hidden">
+        <div>
+            <label class="cookie-label disabled">
+                Required cookies
+                <input checked="true" type="checkbox" disabled="">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies are required to enable core site functionality.</p>
+        </div>
+
+        <div class="cookie-type">
+            <label class="cookie-label">
+                Statistics &amp; analytics cookies
+                <input id="analytics-checkbox" type="checkbox">
+                <span class="checkmark"></span>
+            </label>
+
+            <p class="desc">These cookies give us information about how you use our website and allow us to improve
+                the user experience.</p>
+        </div>
+
+        <p>To learn more about our cookie usage click <a href="https://plumbr.io/support/plumbr-cookies" target="_blank">here</a>.</p>
+
+        <div style="margin-top: 10px;">
+            <button id="cookieCancel" class="cbtn">Cancel</button>
+            <button id="cookieSave" class="cbtn">Save</button>
+        </div>
+    </div>
+</div>
+	
+<script type="text/javascript">
+/* <![CDATA[ */
+var leadin_wordpress = {"userRole":"visitor","pageType":"post","leadinPluginVersion":"7.48.24"};
+/* ]]> */
+</script>
+<script async="" defer="" id="hs-script-loader" type="text/javascript" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/5894543.js(2).download"></script>
+<script type="text/javascript">
+/* <![CDATA[ */
+var param = {"portalUrl":"https:\/\/app.plumbr.io"};
+/* ]]> */
+</script>
+
+
+
+<script type="text/javascript">
+/* <![CDATA[ */
+var local = {"isSupportIndex":"","isSupportType":"","isEmailLandingPage":"","isSearch":"","ajaxurl":"https:\/\/plumbr.io\/wp\/wp-admin\/admin-ajax.php"};
+/* ]]> */
+</script>
+
+
+
+
+
+<script type="text/javascript" defer="" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/autoptimize_80f1fdb2d70c854f88929cb5e1e65e79.js.download"></script>
+
+<iframe owner="archetype" title="archetype" style="display: none; visibility: hidden;" src="./GC Tuning_ Basics _ Plumbr – User Experience &amp; Application Performance Monitoring_files/saved_resource.html"></iframe></body></html>
