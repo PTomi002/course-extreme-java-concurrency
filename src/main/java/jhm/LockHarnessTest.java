@@ -7,7 +7,7 @@ public class LockHarnessTest {
     private final ReentrantLock lock = new ReentrantLock();
     private final int i;
 
-    LockHarnessTest(int i) {
+    public LockHarnessTest(int i) {
         this.i = i;
     }
 
