@@ -11,12 +11,12 @@ public class LockHarnessTest {
         this.i = i;
     }
 
-    public int computeWithLock() {
+    public int computeWithLock(int x) {
         lock.lock();
         int result = 0;
         try {
             for (int j = 0; j < i; j++) {
-                result += j;
+                result += x;
             }
         } finally {
             lock.unlock();
@@ -24,10 +24,10 @@ public class LockHarnessTest {
         return result;
     }
 
-    public synchronized int computeWithIntrinsics() {
+    public synchronized int computeWithIntrinsics(int x) {
         int result = 0;
         for (int j = 0; j < i; j++) {
-            result += j;
+            result += x;
         }
         return result;
     }
