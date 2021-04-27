@@ -8,6 +8,9 @@ plugins {
     id("org.jetbrains.kotlin.jvm") version "1.3.70"
 }
 
+group = "hu.playground"
+version = "1.0.0-SNAPSHOT"
+
 sourceSets["main"].java.srcDir("$projectDir/src/main/java")
 java.sourceCompatibility = JavaVersion.VERSION_11
 tasks.withType<KotlinCompile> {
@@ -28,6 +31,17 @@ dependencies {
 
     // TEST DEPENDENCIES
     testImplementation("io.mockk:mockk:1.9.2")
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("maven") {
+            groupId = "$group"
+            version = "$version"
+
+            from(components["java"])
+        }
+    }
 }
 
 repositories {
